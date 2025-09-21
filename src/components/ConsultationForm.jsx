@@ -814,34 +814,6 @@ const ConsultationForm = () => {
           </CardContent>
         </Card>
 
-        {/* ĐỀ XUẤT ĐIỀU TRỊ */}
-        <Card className="border-gray-200">
-          <CardHeader>
-            <CardTitle className="text-burgundy-700 flex items-center gap-2">
-              <span className="text-xl">💡</span>
-              ĐỀ XUẤT PHƯƠNG PHÁP ĐIỀU TRỊ
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {analysis.recommendations.map((rec, index) => (
-                <div key={index} className="bg-white p-4 rounded-lg border border-gray-200">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="flex-1">
-                      <div className="font-semibold text-gray-800">{rec.issue}</div>
-                      <div className="text-burgundy-600 font-medium">{rec.treatment}</div>
-                      <div className="text-sm text-gray-600 mt-1">{rec.reason}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-lg font-bold text-burgundy-600">{rec.price}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
         {/* ƯU TIÊN */}
         <div>
         <div className="overflow-x-auto">

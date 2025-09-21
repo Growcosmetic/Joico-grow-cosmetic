@@ -853,13 +853,6 @@ const ConsultationForm = () => {
                   </div>
                 </div>
               ))}
-              
-              <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
-                <div className="text-sm text-yellow-700">
-                  <strong>💡 Lưu ý:</strong> Đây là đề xuất tự động dựa trên kết quả chẩn đoán. 
-                  Bạn có thể điều chỉnh phương pháp điều trị phù hợp trong bảng bên dưới.
-                </div>
-              </div>
             </div>
           </CardContent>
         </Card>

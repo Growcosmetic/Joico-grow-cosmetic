@@ -138,6 +138,86 @@ const ConsultationForm = () => {
     }
   };
 
+  // Function để phân tích kết quả chẩn đoán và đề xuất điều trị
+  const generateRecommendations = () => {
+    const { diagnosis } = formData;
+    let recommendations = [];
+    let hairCondition = "Tốt";
+    let priority = "Thấp";
+    
+    // Phân tích độ đàn hồi
+    if (diagnosis.elasticity === 'weak') {
+      recommendations.push({
+        issue: "Độ đàn hồi yếu",
+        treatment: "DEFY DAMAGE Protective Treatment",
+        reason: "Tóc thiếu protein, cần phục hồi cấu trúc",
+        price: "800.000 VNĐ"
+      });
+      hairCondition = "Hư tổn nặng";
+      priority = "Cao";
+    } else if (diagnosis.elasticity === 'average') {
+      recommendations.push({
+        issue: "Độ đàn hồi trung bình",
+        treatment: "Keratin Smoothing Treatment",
+        reason: "Tăng cường độ bền và mềm mượt",
+        price: "600.000 VNĐ"
+      });
+      hairCondition = "Trung bình";
+      priority = "Trung bình";
+    }
+
+    // Phân tích Porosity Test
+    if (diagnosis.porosityTest === 'weak') {
+      recommendations.push({
+        issue: "Độ ẩm kém - tóc hư tổn nặng",
+        treatment: "Deep Moisture Repair",
+        reason: "Tóc chìm nhanh, lớp biểu bì hở",
+        price: "700.000 VNĐ"
+      });
+      if (hairCondition !== "Hư tổn nặng") hairCondition = "Hư tổn nặng";
+      priority = "Cao";
+    } else if (diagnosis.porosityTest === 'average') {
+      recommendations.push({
+        issue: "Độ ẩm trung bình",
+        treatment: "Hydrating Treatment",
+        reason: "Cần dưỡng ẩm để cân bằng",
+        price: "500.000 VNĐ"
+      });
+    }
+
+    // Phân tích Strength
+    if (diagnosis.strength === 'weak') {
+      recommendations.push({
+        issue: "Độ chắc yếu",
+        treatment: "Protein Reconstruction",
+        reason: "Tóc dễ gãy, thiếu protein",
+        price: "650.000 VNĐ"
+      });
+      if (priority !== "Cao") priority = "Cao";
+    }
+
+    // Nếu không có vấn đề nghiêm trọng
+    if (recommendations.length === 0) {
+      recommendations.push({
+        issue: "Tóc khỏe mạnh",
+        treatment: "Maintenance Treatment",
+        reason: "Duy trì tình trạng tốt của tóc",
+        price: "400.000 VNĐ"
+      });
+    }
+
+    return {
+      hairCondition,
+      priority,
+      recommendations,
+      summary: {
+        elasticity: diagnosis.elasticity || 'Chưa đánh giá',
+        porosity: diagnosis.porosityTest || 'Chưa đánh giá', 
+        strength: diagnosis.strength || 'Chưa đánh giá'
+      }
+    };
+  };
+
   const saveForm = async () => {
     console.log('Save form clicked, formData:', formData); // Debug log
     
@@ -678,10 +758,114 @@ const ConsultationForm = () => {
     </div>
   );
 
-  const renderStep3 = () => (
-    <div className="space-y-6">
-      {/* ƯU TIÊN */}
-      <div>
+  const renderStep3 = () => {
+    const analysis = generateRecommendations();
+    
+    return (
+      <div className="space-y-6">
+        {/* TÓM TẮT CHẨN ĐOÁN */}
+        <Card className="border-burgundy-200 bg-burgundy-50">
+          <CardHeader>
+            <CardTitle className="text-burgundy-700 flex items-center gap-2">
+              <span className="text-xl">📊</span>
+              TÓM TẮT KẾT QUẢ CHẨN ĐOÁN
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="text-center p-4 bg-white rounded-lg border">
+                <div className="text-sm text-gray-600">Độ đàn hồi</div>
+                <div className={`text-lg font-bold ${
+                  analysis.summary.elasticity === 'good' ? 'text-green-600' :
+                  analysis.summary.elasticity === 'average' ? 'text-yellow-600' : 'text-red-600'
+                }`}>
+                  {analysis.summary.elasticity === 'good' ? 'TỐT' :
+                   analysis.summary.elasticity === 'average' ? 'TRUNG BÌNH' :
+                   analysis.summary.elasticity === 'weak' ? 'YẾU' : 'Chưa đánh giá'}
+                </div>
+              </div>
+              <div className="text-center p-4 bg-white rounded-lg border">
+                <div className="text-sm text-gray-600">Độ ẩm (Porosity)</div>
+                <div className={`text-lg font-bold ${
+                  analysis.summary.porosity === 'good' ? 'text-green-600' :
+                  analysis.summary.porosity === 'average' ? 'text-yellow-600' : 'text-red-600'
+                }`}>
+                  {analysis.summary.porosity === 'good' ? 'TỐT' :
+                   analysis.summary.porosity === 'average' ? 'TRUNG BÌNH' :
+                   analysis.summary.porosity === 'weak' ? 'YẾU' : 'Chưa đánh giá'}
+                </div>
+              </div>
+              <div className="text-center p-4 bg-white rounded-lg border">
+                <div className="text-sm text-gray-600">Độ chắc (Strength)</div>
+                <div className={`text-lg font-bold ${
+                  analysis.summary.strength === 'good' ? 'text-green-600' :
+                  analysis.summary.strength === 'average' ? 'text-yellow-600' : 'text-red-600'
+                }`}>
+                  {analysis.summary.strength === 'good' ? 'TỐT' :
+                   analysis.summary.strength === 'average' ? 'TRUNG BÌNH' :
+                   analysis.summary.strength === 'weak' ? 'YẾU' : 'Chưa đánh giá'}
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white p-4 rounded-lg border">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <span className="text-sm text-gray-600">Tình trạng tóc: </span>
+                  <span className={`font-bold ${
+                    analysis.hairCondition === 'Tốt' ? 'text-green-600' :
+                    analysis.hairCondition === 'Trung bình' ? 'text-yellow-600' : 'text-red-600'
+                  }`}>{analysis.hairCondition}</span>
+                </div>
+                <div>
+                  <span className="text-sm text-gray-600">Độ ưu tiên: </span>
+                  <span className={`font-bold px-2 py-1 rounded text-xs ${
+                    analysis.priority === 'Cao' ? 'bg-red-100 text-red-700' :
+                    analysis.priority === 'Trung bình' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
+                  }`}>{analysis.priority}</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ĐỀ XUẤT ĐIỀU TRỊ */}
+        <Card className="border-green-200 bg-green-50">
+          <CardHeader>
+            <CardTitle className="text-green-700 flex items-center gap-2">
+              <span className="text-xl">💡</span>
+              ĐỀ XUẤT PHƯƠNG PHÁP ĐIỀU TRỊ
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {analysis.recommendations.map((rec, index) => (
+                <div key={index} className="bg-white p-4 rounded-lg border border-green-200">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex-1">
+                      <div className="font-semibold text-gray-800">{rec.issue}</div>
+                      <div className="text-burgundy-600 font-medium">{rec.treatment}</div>
+                      <div className="text-sm text-gray-600 mt-1">{rec.reason}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-bold text-green-600">{rec.price}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+                <div className="text-sm text-yellow-700">
+                  <strong>💡 Lưu ý:</strong> Đây là đề xuất tự động dựa trên kết quả chẩn đoán. 
+                  Bạn có thể điều chỉnh phương pháp điều trị phù hợp trong bảng bên dưới.
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ƯU TIÊN */}
+        <div>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse border border-gray-300">
             <thead>
@@ -840,7 +1024,8 @@ const ConsultationForm = () => {
         </div>
       </div>
     </div>
-  );
+    );
+  };
 
   const renderStep4 = () => (
     <div className="space-y-6">

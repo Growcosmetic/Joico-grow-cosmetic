@@ -139,9 +139,20 @@ const ConsultationForm = () => {
   };
 
   const saveForm = async () => {
+    console.log('Save form clicked, formData:', formData); // Debug log
+    
     try {
+      // Validate required fields
+      if (!formData.customerInfo.name || !formData.customerInfo.phone) {
+        alert('Vui lòng nhập đầy đủ Họ tên và Số điện thoại!');
+        return;
+      }
+
+      console.log('Saving consultation to Firestore...'); // Debug log
+      
       // Save consultation data to Firestore
       await consultationService.add(formData);
+      console.log('Consultation saved successfully'); // Debug log
       
       // Also add/update customer if they don't exist
       let customerData = null;
@@ -149,51 +160,97 @@ const ConsultationForm = () => {
         customerData = {
           name: formData.customerInfo.name,
           phone: formData.customerInfo.phone,
-          email: formData.customerInfo.email,
-          birthday: formData.customerInfo.birthday,
-          gender: formData.customerInfo.gender,
+          email: formData.customerInfo.email || '',
+          birthday: formData.customerInfo.birthday || '',
+          gender: formData.customerInfo.gender || '',
           lastVisit: new Date().toISOString().split('T')[0],
           totalVisits: 1,
           status: 'active',
-          hairCondition: formData.customerInfo.currentIssues.join(', '),
-          treatments: formData.customerInfo.previousTreatments,
-          nextAppointment: formData.passport.nextAppointment || null
+          hairCondition: formData.customerInfo.currentIssues?.join(', ') || '',
+          treatments: formData.customerInfo.previousTreatments || [],
+          nextAppointment: formData.passport?.nextAppointment || null,
+          notes: `Tư vấn ngày ${new Date().toLocaleDateString('vi-VN')}`
         };
         
+        console.log('Saving customer data:', customerData); // Debug log
         await customerService.add(customerData);
+        console.log('Customer saved successfully'); // Debug log
       }
       
-      // Send emails after successful save
-      if (customerData) {
+      // Send emails after successful save (optional)
+      if (customerData && customerData.email) {
         try {
+          console.log('Attempting to send emails...'); // Debug log
           const emailResults = await EmailService.sendConsultationEmails(customerData, formData);
           
-          let emailMessage = 'Dữ liệu tư vấn đã được lưu thành công!\n\n';
+          let emailMessage = '✅ Dữ liệu tư vấn đã được lưu thành công!\n\n';
           
           if (emailResults.customer.success) {
-            emailMessage += '✅ Email đã gửi cho khách hàng\n';
+            emailMessage += '📧 Email đã gửi cho khách hàng\n';
           } else if (customerData.email) {
-            emailMessage += '❌ Không thể gửi email cho khách hàng\n';
+            emailMessage += '⚠️ Không thể gửi email cho khách hàng\n';
           }
           
           if (emailResults.salon.success) {
-            emailMessage += '✅ Email thông báo đã gửi cho salon\n';
+            emailMessage += '📧 Email thông báo đã gửi cho salon\n';
           } else {
-            emailMessage += '❌ Không thể gửi email cho salon\n';
+            emailMessage += '⚠️ Không thể gửi email cho salon\n';
           }
           
           alert(emailMessage);
         } catch (emailError) {
           console.error('Email sending error:', emailError);
-          alert('Dữ liệu đã lưu thành công!\n⚠️ Chưa cấu hình email. Vui lòng setup EmailJS để gửi email tự động.');
+          alert('✅ Dữ liệu đã lưu thành công!\n\n⚠️ Email chưa được cấu hình. Vui lòng liên hệ admin để setup EmailJS.');
         }
       } else {
-        alert('Dữ liệu tư vấn đã được lưu thành công!');
+        alert('✅ Dữ liệu tư vấn đã được lưu thành công!\n\n💡 Tip: Nhập email khách hàng để tự động gửi thông báo.');
       }
+      
+      // Reset form after successful save
+      console.log('Resetting form...'); // Debug log
+      setCurrentStep(1);
+      setFormData({
+        customerInfo: {
+          name: '',
+          phone: '',
+          email: '',
+          birthday: '',
+          gender: '',
+          previousTreatments: [],
+          heatUsageFrequency: '',
+          hairGoals: [],
+          currentIssues: [],
+          expectations: {
+            today: '',
+            twoWeeks: '',
+            oneMonth: ''
+          }
+        },
+        diagnosis: {
+          elasticity: '',
+          visualObservation: {
+            tangled: false,
+            shiny: false,
+            cuticleCondition: ''
+          },
+          porosityTest: '',
+          strength: ''
+        },
+        treatment: {
+          priority: [],
+          longTerm: []
+        },
+        passport: {
+          servicesUsed: [],
+          improvementPercentage: '',
+          homeCarePlan: [],
+          nextAppointment: ''
+        }
+      });
       
     } catch (error) {
       console.error('Error saving consultation:', error);
-      alert('Có lỗi khi lưu dữ liệu tư vấn. Vui lòng thử lại!');
+      alert('❌ Có lỗi khi lưu dữ liệu tư vấn. Vui lòng thử lại!\n\nLỗi: ' + error.message);
     }
   };
 

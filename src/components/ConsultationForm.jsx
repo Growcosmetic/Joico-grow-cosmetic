@@ -6,8 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ArrowLeft, ArrowRight, Save, FileText } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, FileText, Mail } from 'lucide-react';
 import { consultationService, customerService } from '../firebase/firestore';
+import { EmailService } from '../services/emailService';
 
 const ConsultationForm = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -143,8 +144,9 @@ const ConsultationForm = () => {
       await consultationService.add(formData);
       
       // Also add/update customer if they don't exist
+      let customerData = null;
       if (formData.customerInfo.name && formData.customerInfo.phone) {
-        const customerData = {
+        customerData = {
           name: formData.customerInfo.name,
           phone: formData.customerInfo.phone,
           email: formData.customerInfo.email,
@@ -155,13 +157,40 @@ const ConsultationForm = () => {
           status: 'active',
           hairCondition: formData.customerInfo.currentIssues.join(', '),
           treatments: formData.customerInfo.previousTreatments,
-          nextAppointment: null
+          nextAppointment: formData.passport.nextAppointment || null
         };
         
         await customerService.add(customerData);
       }
       
-      alert('Dữ liệu tư vấn đã được lưu thành công!');
+      // Send emails after successful save
+      if (customerData) {
+        try {
+          const emailResults = await EmailService.sendConsultationEmails(customerData, formData);
+          
+          let emailMessage = 'Dữ liệu tư vấn đã được lưu thành công!\n\n';
+          
+          if (emailResults.customer.success) {
+            emailMessage += '✅ Email đã gửi cho khách hàng\n';
+          } else if (customerData.email) {
+            emailMessage += '❌ Không thể gửi email cho khách hàng\n';
+          }
+          
+          if (emailResults.salon.success) {
+            emailMessage += '✅ Email thông báo đã gửi cho salon\n';
+          } else {
+            emailMessage += '❌ Không thể gửi email cho salon\n';
+          }
+          
+          alert(emailMessage);
+        } catch (emailError) {
+          console.error('Email sending error:', emailError);
+          alert('Dữ liệu đã lưu thành công!\n⚠️ Chưa cấu hình email. Vui lòng setup EmailJS để gửi email tự động.');
+        }
+      } else {
+        alert('Dữ liệu tư vấn đã được lưu thành công!');
+      }
+      
     } catch (error) {
       console.error('Error saving consultation:', error);
       alert('Có lỗi khi lưu dữ liệu tư vấn. Vui lòng thử lại!');
@@ -669,7 +698,7 @@ const ConsultationForm = () => {
             className="border-burgundy-500 text-burgundy-500 hover:bg-burgundy-50"
           >
             <Save size={16} className="mr-2" />
-            Lưu tạm
+            Lưu & Gửi Email
           </Button>
 
           {currentStep < 4 ? (

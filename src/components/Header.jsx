@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Calendar, Phone, MapPin } from 'lucide-react';
 
-const Header = () => {
+const Header = ({ setActiveSection }) => {
   return (
     <header className="bg-burgundy-gradient text-white">
       {/* JOICO Brand Header */}
@@ -21,17 +21,10 @@ const Header = () => {
           </div>
           
           <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex items-center gap-2 text-sm">
-              <Phone size={16} />
-              <span>0938 987 733</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <MapPin size={16} />
-              <span>14-16-18 Lê Thị Riêng, P.Bến Thành, TP.HCM</span>
-            </div>
             <Button 
               variant="secondary" 
               className="bg-white text-burgundy-500 hover:bg-burgundy-50"
+              onClick={() => setActiveSection && setActiveSection('appointments')}
             >
               <Calendar size={16} className="mr-2" />
               Đặt lịch hẹn

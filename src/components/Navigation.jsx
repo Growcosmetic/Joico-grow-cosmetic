@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Home, FileText, Users, Calendar, BarChart3, ChevronDown, Settings, LogOut, User } from 'lucide-react';
+import { Menu, X, Home, FileText, Users, Calendar, BarChart3, ChevronDown, Settings, LogOut, User, UserPlus } from 'lucide-react';
 
-const Navigation = ({ activeSection, setActiveSection }) => {
+const Navigation = ({ activeSection, setActiveSection, user, onLogout }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAdminMenuOpen, setIsAdminMenuOpen] = useState(false);
   const adminMenuRef = useRef(null);
@@ -42,15 +42,17 @@ const Navigation = ({ activeSection, setActiveSection }) => {
     setIsAdminMenuOpen(false);
     switch (action) {
       case 'profile':
-        alert('Chức năng quản lý hồ sơ đang được phát triển!');
+        setActiveSection('profile');
         break;
-      case 'settings':
-        alert('Chức năng cài đặt hệ thống đang được phát triển!');
+      case 'system':
+        setActiveSection('system');
+        break;
+      case 'users':
+        setActiveSection('users');
         break;
       case 'logout':
         if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
-          alert('Đã đăng xuất thành công!');
-          // Có thể redirect hoặc reset state ở đây
+          onLogout();
         }
         break;
       default:
@@ -98,7 +100,9 @@ const Navigation = ({ activeSection, setActiveSection }) => {
 
           {/* User Info */}
           <div className="hidden md:flex items-center gap-4 relative" ref={adminMenuRef}>
-            <span className="text-sm text-gray-600">Xin chào, Admin</span>
+            <span className="text-sm text-gray-600">
+              Xin chào, {user?.displayName || user?.email?.split('@')[0] || 'Admin'}
+            </span>
             <div 
               className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
               onClick={() => setIsAdminMenuOpen(!isAdminMenuOpen)}
@@ -121,11 +125,18 @@ const Navigation = ({ activeSection, setActiveSection }) => {
                     Quản lý hồ sơ
                   </button>
                   <button
-                    onClick={() => handleAdminAction('settings')}
+                    onClick={() => handleAdminAction('users')}
+                    className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                  >
+                    <UserPlus size={16} />
+                    Quản lý tài khoản
+                  </button>
+                  <button
+                    onClick={() => handleAdminAction('system')}
                     className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                   >
                     <Settings size={16} />
-                    Cài đặt hệ thống
+                    Quản lý hệ thống
                   </button>
                   <hr className="my-2" />
                   <button

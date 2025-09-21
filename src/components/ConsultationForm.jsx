@@ -764,7 +764,7 @@ const ConsultationForm = () => {
     return (
       <div className="space-y-6">
         {/* TÓM TẮT CHẨN ĐOÁN */}
-        <Card className="border-burgundy-200 bg-burgundy-50">
+        <Card className="border-gray-200">
           <CardHeader>
             <CardTitle className="text-burgundy-700 flex items-center gap-2">
               <span className="text-xl">📊</span>
@@ -775,10 +775,7 @@ const ConsultationForm = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div className="text-center p-4 bg-white rounded-lg border">
                 <div className="text-sm text-gray-600">Độ đàn hồi</div>
-                <div className={`text-lg font-bold ${
-                  analysis.summary.elasticity === 'good' ? 'text-green-600' :
-                  analysis.summary.elasticity === 'average' ? 'text-yellow-600' : 'text-red-600'
-                }`}>
+                <div className="text-lg font-bold text-burgundy-600">
                   {analysis.summary.elasticity === 'good' ? 'TỐT' :
                    analysis.summary.elasticity === 'average' ? 'TRUNG BÌNH' :
                    analysis.summary.elasticity === 'weak' ? 'YẾU' : 'Chưa đánh giá'}
@@ -786,10 +783,7 @@ const ConsultationForm = () => {
               </div>
               <div className="text-center p-4 bg-white rounded-lg border">
                 <div className="text-sm text-gray-600">Độ ẩm (Porosity)</div>
-                <div className={`text-lg font-bold ${
-                  analysis.summary.porosity === 'good' ? 'text-green-600' :
-                  analysis.summary.porosity === 'average' ? 'text-yellow-600' : 'text-red-600'
-                }`}>
+                <div className="text-lg font-bold text-burgundy-600">
                   {analysis.summary.porosity === 'good' ? 'TỐT' :
                    analysis.summary.porosity === 'average' ? 'TRUNG BÌNH' :
                    analysis.summary.porosity === 'weak' ? 'YẾU' : 'Chưa đánh giá'}
@@ -797,10 +791,7 @@ const ConsultationForm = () => {
               </div>
               <div className="text-center p-4 bg-white rounded-lg border">
                 <div className="text-sm text-gray-600">Độ chắc (Strength)</div>
-                <div className={`text-lg font-bold ${
-                  analysis.summary.strength === 'good' ? 'text-green-600' :
-                  analysis.summary.strength === 'average' ? 'text-yellow-600' : 'text-red-600'
-                }`}>
+                <div className="text-lg font-bold text-burgundy-600">
                   {analysis.summary.strength === 'good' ? 'TỐT' :
                    analysis.summary.strength === 'average' ? 'TRUNG BÌNH' :
                    analysis.summary.strength === 'weak' ? 'YẾU' : 'Chưa đánh giá'}
@@ -812,17 +803,11 @@ const ConsultationForm = () => {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <span className="text-sm text-gray-600">Tình trạng tóc: </span>
-                  <span className={`font-bold ${
-                    analysis.hairCondition === 'Tốt' ? 'text-green-600' :
-                    analysis.hairCondition === 'Trung bình' ? 'text-yellow-600' : 'text-red-600'
-                  }`}>{analysis.hairCondition}</span>
+                  <span className="font-bold text-burgundy-600">{analysis.hairCondition}</span>
                 </div>
                 <div>
                   <span className="text-sm text-gray-600">Độ ưu tiên: </span>
-                  <span className={`font-bold px-2 py-1 rounded text-xs ${
-                    analysis.priority === 'Cao' ? 'bg-red-100 text-red-700' :
-                    analysis.priority === 'Trung bình' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
-                  }`}>{analysis.priority}</span>
+                  <span className="font-bold px-2 py-1 rounded text-xs bg-burgundy-100 text-burgundy-700">{analysis.priority}</span>
                 </div>
               </div>
             </div>
@@ -830,9 +815,9 @@ const ConsultationForm = () => {
         </Card>
 
         {/* ĐỀ XUẤT ĐIỀU TRỊ */}
-        <Card className="border-green-200 bg-green-50">
+        <Card className="border-gray-200">
           <CardHeader>
-            <CardTitle className="text-green-700 flex items-center gap-2">
+            <CardTitle className="text-burgundy-700 flex items-center gap-2">
               <span className="text-xl">💡</span>
               ĐỀ XUẤT PHƯƠNG PHÁP ĐIỀU TRỊ
             </CardTitle>
@@ -840,7 +825,7 @@ const ConsultationForm = () => {
           <CardContent>
             <div className="space-y-4">
               {analysis.recommendations.map((rec, index) => (
-                <div key={index} className="bg-white p-4 rounded-lg border border-green-200">
+                <div key={index} className="bg-white p-4 rounded-lg border border-gray-200">
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex-1">
                       <div className="font-semibold text-gray-800">{rec.issue}</div>
@@ -848,7 +833,7 @@ const ConsultationForm = () => {
                       <div className="text-sm text-gray-600 mt-1">{rec.reason}</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-lg font-bold text-green-600">{rec.price}</div>
+                      <div className="text-lg font-bold text-burgundy-600">{rec.price}</div>
                     </div>
                   </div>
                 </div>

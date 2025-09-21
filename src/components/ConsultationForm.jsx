@@ -8,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ArrowLeft, ArrowRight, Save, FileText, Mail } from 'lucide-react';
 import { consultationService, customerService } from '../firebase/firestore';
-import { EmailService } from '../services/emailService';
+// import { EmailService } from '../services/emailService'; // Tạm thời comment để tránh lỗi
 
 const ConsultationForm = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -235,8 +235,8 @@ const ConsultationForm = () => {
         console.warn('⚠️ Customer Firestore save failed:', firestoreError);
       }
       
-      // Simple success message (skip email for now due to Firestore issues)
-      alert('✅ Dữ liệu tư vấn đã được lưu thành công!\n\n📝 Thông tin khách hàng: ' + customerData.name + '\n📞 SĐT: ' + customerData.phone + '\n\n💾 Dữ liệu đã được lưu an toàn!');
+      // Success message
+      alert('✅ DỮ LIỆU TƯ VẤN ĐÃ ĐƯỢC LƯU THÀNH CÔNG!\n\n👤 Khách hàng: ' + customerData.name + '\n📞 SĐT: ' + customerData.phone + '\n📅 Ngày tư vấn: ' + new Date().toLocaleDateString('vi-VN') + '\n\n💾 Dữ liệu đã được lưu trữ an toàn!');
       
       // Reset form after successful save
       console.log('Resetting form...'); // Debug log

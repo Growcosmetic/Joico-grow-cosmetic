@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import * as XLSX from 'xlsx';
+import { customerService, appointmentService, consultationService } from '../firebase/firestore';
 import { 
   BarChart, 
   Bar, 
@@ -33,14 +34,24 @@ const ReportsAnalytics = () => {
   const [consultations, setConsultations] = useState([]);
 
   useEffect(() => {
-    // Load data from localStorage
-    const savedCustomers = localStorage.getItem('customers');
-    const savedAppointments = localStorage.getItem('appointments');
-    const savedConsultations = localStorage.getItem('consultationData');
+    // Load data from Firestore
+    const loadData = async () => {
+      try {
+        const [customersData, appointmentsData, consultationsData] = await Promise.all([
+          customerService.getAll(),
+          appointmentService.getAll(),
+          consultationService.getAll()
+        ]);
+        
+        setCustomers(customersData);
+        setAppointments(appointmentsData);
+        setConsultations(consultationsData);
+      } catch (error) {
+        console.error('Error loading data for reports:', error);
+      }
+    };
 
-    if (savedCustomers) setCustomers(JSON.parse(savedCustomers));
-    if (savedAppointments) setAppointments(JSON.parse(savedAppointments));
-    if (savedConsultations) setConsultations([JSON.parse(savedConsultations)]);
+    loadData();
   }, []);
 
   // Sample data for charts

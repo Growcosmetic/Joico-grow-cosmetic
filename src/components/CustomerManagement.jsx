@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import * as XLSX from 'xlsx';
+import { customerService } from '../firebase/firestore';
 import { 
   Search, 
   Plus, 
@@ -36,60 +37,81 @@ const CustomerManagement = () => {
   });
   const fileInputRef = useRef(null);
 
-  // Load customers from localStorage on component mount
+  // Load customers from Firestore on component mount
   useEffect(() => {
-    const savedCustomers = localStorage.getItem('customers');
-    if (savedCustomers) {
-      setCustomers(JSON.parse(savedCustomers));
-    } else {
-      // Sample data for demonstration
-      const sampleCustomers = [
-        {
-          id: 1,
-          name: 'Nguyễn Thị Lan',
-          phone: '0901234567',
-          email: 'lan.nguyen@email.com',
-          birthday: '1990-05-15',
-          gender: 'female',
-          lastVisit: '2025-01-15',
-          totalVisits: 5,
-          status: 'active',
-          hairCondition: 'Tóc khô, hư tổn',
-          treatments: ['DEFY DAMAGE', 'Keratin'],
-          nextAppointment: '2025-02-15'
-        },
-        {
-          id: 2,
-          name: 'Trần Văn Minh',
-          phone: '0912345678',
-          email: 'minh.tran@email.com',
-          birthday: '1985-08-22',
-          gender: 'male',
-          lastVisit: '2025-01-10',
-          totalVisits: 3,
-          status: 'active',
-          hairCondition: 'Tóc mỏng, rụng nhiều',
-          treatments: ['Amino', 'Massage'],
-          nextAppointment: '2025-02-10'
-        },
-        {
-          id: 3,
-          name: 'Lê Thị Hoa',
-          phone: '0923456789',
-          email: 'hoa.le@email.com',
-          birthday: '1992-12-03',
-          gender: 'female',
-          lastVisit: '2024-12-20',
-          totalVisits: 8,
-          status: 'inactive',
-          hairCondition: 'Tóc nhuộm, cần dưỡng',
-          treatments: ['DEFY DAMAGE', 'Color Care'],
-          nextAppointment: null
+    const loadCustomers = async () => {
+      try {
+        const customersData = await customerService.getAll();
+        if (customersData.length === 0) {
+          // Add sample data if no customers exist
+          const sampleCustomers = [
+            {
+              name: 'Nguyễn Thị Lan',
+              phone: '0901234567',
+              email: 'lan.nguyen@email.com',
+              birthday: '1990-05-15',
+              gender: 'female',
+              lastVisit: '2025-01-15',
+              totalVisits: 5,
+              status: 'active',
+              hairCondition: 'Tóc khô, hư tổn',
+              treatments: ['DEFY DAMAGE', 'Keratin'],
+              nextAppointment: '2025-02-15'
+            },
+            {
+              name: 'Trần Văn Minh',
+              phone: '0912345678',
+              email: 'minh.tran@email.com',
+              birthday: '1985-08-22',
+              gender: 'male',
+              lastVisit: '2025-01-10',
+              totalVisits: 3,
+              status: 'active',
+              hairCondition: 'Tóc mỏng, rụng nhiều',
+              treatments: ['Amino', 'Massage'],
+              nextAppointment: '2025-02-10'
+            },
+            {
+              name: 'Lê Thị Hoa',
+              phone: '0923456789',
+              email: 'hoa.le@email.com',
+              birthday: '1992-12-03',
+              gender: 'female',
+              lastVisit: '2024-12-20',
+              totalVisits: 8,
+              status: 'inactive',
+              hairCondition: 'Tóc nhuộm, cần dưỡng',
+              treatments: ['DEFY DAMAGE', 'Color Care'],
+              nextAppointment: null
+            }
+          ];
+          
+          // Add sample customers to Firestore
+          for (const customer of sampleCustomers) {
+            await customerService.add(customer);
+          }
+          
+          // Reload customers after adding samples
+          const newCustomersData = await customerService.getAll();
+          setCustomers(newCustomersData);
+        } else {
+          setCustomers(customersData);
         }
-      ];
-      setCustomers(sampleCustomers);
-      localStorage.setItem('customers', JSON.stringify(sampleCustomers));
-    }
+      } catch (error) {
+        console.error('Error loading customers:', error);
+        alert('Có lỗi khi tải dữ liệu khách hàng. Vui lòng thử lại!');
+      }
+    };
+
+    loadCustomers();
+
+    // Setup real-time listener
+    const unsubscribe = customerService.onSnapshot((customersData) => {
+      setCustomers(customersData);
+    });
+
+    // Cleanup listener on component unmount
+    return () => unsubscribe();
   }, []);
 
   // Filter customers based on search term
@@ -100,37 +122,39 @@ const CustomerManagement = () => {
   );
 
   // Handle adding new customer
-  const handleAddCustomer = () => {
+  const handleAddCustomer = async () => {
     if (!newCustomer.name || !newCustomer.phone) {
       alert('Vui lòng nhập tên và số điện thoại!');
       return;
     }
 
-    const customerToAdd = {
-      id: Date.now(), // Simple ID generation
-      ...newCustomer,
-      lastVisit: new Date().toISOString().split('T')[0],
-      totalVisits: 0,
-      status: 'active',
-      nextAppointment: null
-    };
+    try {
+      const customerToAdd = {
+        ...newCustomer,
+        lastVisit: new Date().toISOString().split('T')[0],
+        totalVisits: 0,
+        status: 'active',
+        nextAppointment: null
+      };
 
-    const updatedCustomers = [...customers, customerToAdd];
-    setCustomers(updatedCustomers);
-    localStorage.setItem('customers', JSON.stringify(updatedCustomers));
-    
-    // Reset form
-    setNewCustomer({
-      name: '',
-      phone: '',
-      email: '',
-      birthday: '',
-      gender: '',
-      hairCondition: '',
-      treatments: []
-    });
-    setShowAddForm(false);
-    alert('Thêm khách hàng thành công!');
+      await customerService.add(customerToAdd);
+      
+      // Reset form
+      setNewCustomer({
+        name: '',
+        phone: '',
+        email: '',
+        birthday: '',
+        gender: '',
+        hairCondition: '',
+        treatments: []
+      });
+      setShowAddForm(false);
+      alert('Thêm khách hàng thành công!');
+    } catch (error) {
+      console.error('Error adding customer:', error);
+      alert('Có lỗi khi thêm khách hàng. Vui lòng thử lại!');
+    }
   };
 
   // Handle input changes for new customer form
@@ -210,8 +234,7 @@ const CustomerManagement = () => {
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-        const importedCustomers = jsonData.map((row, index) => ({
-          id: Date.now() + index,
+        const importedCustomers = jsonData.map((row) => ({
           name: row['Họ và tên'] || row['Name'] || '',
           phone: row['Số điện thoại'] || row['Phone'] || '',
           email: row['Email'] || '',
@@ -226,10 +249,17 @@ const CustomerManagement = () => {
         })).filter(customer => customer.name && customer.phone); // Only import rows with name and phone
 
         if (importedCustomers.length > 0) {
-          const updatedCustomers = [...customers, ...importedCustomers];
-          setCustomers(updatedCustomers);
-          localStorage.setItem('customers', JSON.stringify(updatedCustomers));
-          alert(`Đã nhập thành công ${importedCustomers.length} khách hàng từ file Excel!`);
+          // Add customers to Firestore one by one
+          let successCount = 0;
+          for (const customer of importedCustomers) {
+            try {
+              await customerService.add(customer);
+              successCount++;
+            } catch (error) {
+              console.error('Error adding customer:', customer.name, error);
+            }
+          }
+          alert(`Đã nhập thành công ${successCount}/${importedCustomers.length} khách hàng từ file Excel!`);
         } else {
           alert('Không tìm thấy dữ liệu hợp lệ trong file Excel. Vui lòng kiểm tra định dạng file.');
         }

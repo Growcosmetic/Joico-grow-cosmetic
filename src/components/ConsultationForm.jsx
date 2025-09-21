@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ArrowLeft, ArrowRight, Save, FileText } from 'lucide-react';
+import { consultationService, customerService } from '../firebase/firestore';
 
 const ConsultationForm = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -136,10 +137,35 @@ const ConsultationForm = () => {
     }
   };
 
-  const saveForm = () => {
-    // Save form data to localStorage for now
-    localStorage.setItem('consultationData', JSON.stringify(formData));
-    alert('Dữ liệu tư vấn đã được lưu thành công!');
+  const saveForm = async () => {
+    try {
+      // Save consultation data to Firestore
+      await consultationService.add(formData);
+      
+      // Also add/update customer if they don't exist
+      if (formData.customerInfo.name && formData.customerInfo.phone) {
+        const customerData = {
+          name: formData.customerInfo.name,
+          phone: formData.customerInfo.phone,
+          email: formData.customerInfo.email,
+          birthday: formData.customerInfo.birthday,
+          gender: formData.customerInfo.gender,
+          lastVisit: new Date().toISOString().split('T')[0],
+          totalVisits: 1,
+          status: 'active',
+          hairCondition: formData.customerInfo.currentIssues.join(', '),
+          treatments: formData.customerInfo.previousTreatments,
+          nextAppointment: null
+        };
+        
+        await customerService.add(customerData);
+      }
+      
+      alert('Dữ liệu tư vấn đã được lưu thành công!');
+    } catch (error) {
+      console.error('Error saving consultation:', error);
+      alert('Có lỗi khi lưu dữ liệu tư vấn. Vui lòng thử lại!');
+    }
   };
 
   const renderStep1 = () => (

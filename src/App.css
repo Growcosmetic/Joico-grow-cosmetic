@@ -1,0 +1,294 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(0.98 0.01 320);
+  --foreground: oklch(0.15 0.05 320);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.15 0.05 320);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.15 0.05 320);
+  --primary: oklch(0.35 0.15 320);
+  --primary-foreground: oklch(0.98 0.01 320);
+  --secondary: oklch(0.92 0.02 320);
+  --secondary-foreground: oklch(0.35 0.15 320);
+  --muted: oklch(0.95 0.01 320);
+  --muted-foreground: oklch(0.55 0.05 320);
+  --accent: oklch(0.92 0.02 320);
+  --accent-foreground: oklch(0.35 0.15 320);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.88 0.02 320);
+  --input: oklch(0.88 0.02 320);
+  --ring: oklch(0.35 0.15 320);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.98 0.01 320);
+  --sidebar-foreground: oklch(0.15 0.05 320);
+  --sidebar-primary: oklch(0.35 0.15 320);
+  --sidebar-primary-foreground: oklch(0.98 0.01 320);
+  --sidebar-accent: oklch(0.92 0.02 320);
+  --sidebar-accent-foreground: oklch(0.35 0.15 320);
+  --sidebar-border: oklch(0.88 0.02 320);
+  --sidebar-ring: oklch(0.35 0.15 320);
+  
+  /* Custom Burgundy Colors - JOICO DEFY DAMAGE Theme */
+  --burgundy-50: #fdf2f8;
+  --burgundy-100: #fce7f3;
+  --burgundy-200: #fbcfe8;
+  --burgundy-300: #f9a8d4;
+  --burgundy-400: #f472b6;
+  --burgundy-500: #8B4B6B;
+  --burgundy-600: #7A4260;
+  --burgundy-700: #693954;
+  --burgundy-800: #582F48;
+  --burgundy-900: #47263C;
+}
+
+.dark {
+  --background: oklch(0.15 0.05 320);
+  --foreground: oklch(0.98 0.01 320);
+  --card: oklch(0.20 0.05 320);
+  --card-foreground: oklch(0.98 0.01 320);
+  --popover: oklch(0.20 0.05 320);
+  --popover-foreground: oklch(0.98 0.01 320);
+  --primary: oklch(0.70 0.10 320);
+  --primary-foreground: oklch(0.15 0.05 320);
+  --secondary: oklch(0.25 0.05 320);
+  --secondary-foreground: oklch(0.98 0.01 320);
+  --muted: oklch(0.25 0.05 320);
+  --muted-foreground: oklch(0.70 0.05 320);
+  --accent: oklch(0.25 0.05 320);
+  --accent-foreground: oklch(0.98 0.01 320);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(0.30 0.05 320);
+  --input: oklch(0.30 0.05 320);
+  --ring: oklch(0.70 0.10 320);
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+}
+
+/* Custom Burgundy Utilities */
+.bg-burgundy-500 {
+  background-color: var(--burgundy-500);
+}
+
+.text-burgundy-500 {
+  color: var(--burgundy-500);
+}
+
+.border-burgundy-500 {
+  border-color: var(--burgundy-500);
+}
+
+.bg-burgundy-gradient {
+  background: linear-gradient(135deg, #8B4B6B 0%, #693954 100%);
+}
+
+/* JOICO DEFY DAMAGE Gradient */
+.bg-joico-gradient {
+  background: linear-gradient(135deg, #8B4B6B 0%, #7A4260 50%, #693954 100%);
+}
+
+/* JOICO Brand Styling */
+.joico-header {
+  background: var(--burgundy-500);
+  color: white;
+  padding: 1rem;
+  text-align: center;
+}
+
+.joico-logo {
+  font-size: 2rem;
+  font-weight: bold;
+  letter-spacing: 0.2em;
+}
+
+.joico-tagline {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin-top: 0.25rem;
+}
+
+.defy-damage-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: white;
+  letter-spacing: 0.1em;
+  margin-top: 1rem;
+}
+
+/* Form Styling */
+.consultation-form {
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  margin: 2rem 0;
+}
+
+.form-section {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.form-section:last-child {
+  border-bottom: none;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--burgundy-500);
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.checkbox-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  transition: all 0.2s;
+}
+
+.checkbox-item:hover {
+  border-color: var(--burgundy-500);
+  background-color: #fdf2f8;
+}
+
+.checkbox-item input[type="checkbox"] {
+  accent-color: var(--burgundy-500);
+}
+
+/* Table Styling */
+.diagnosis-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.diagnosis-table th,
+.diagnosis-table td {
+  border: 1px solid #e5e7eb;
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.diagnosis-table th {
+  background-color: var(--burgundy-500);
+  color: white;
+  font-weight: 600;
+}
+
+.diagnosis-table tr:nth-child(even) {
+  background-color: #fdf2f8;
+}
+
+/* Button Styling */
+.btn-primary {
+  background: var(--burgundy-500);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.375rem;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  background: var(--burgundy-700);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: white;
+  color: var(--burgundy-500);
+  border: 2px solid var(--burgundy-500);
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background: var(--burgundy-500);
+  color: white;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .checkbox-group {
+    grid-template-columns: 1fr;
+  }
+  
+  .diagnosis-table {
+    font-size: 0.875rem;
+  }
+  
+  .diagnosis-table th,
+  .diagnosis-table td {
+    padding: 0.5rem;
+  }
+  
+  .defy-damage-title {
+    font-size: 2rem;
+  }
+}
+
+/* Animation */
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-in {
+  animation: slideIn 0.6s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

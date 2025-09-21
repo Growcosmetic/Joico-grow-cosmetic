@@ -138,78 +138,27 @@ const ConsultationForm = () => {
     }
   };
 
-  // Function để phân tích kết quả chẩn đoán và đề xuất điều trị
-  const generateRecommendations = () => {
+  // Function để phân tích kết quả chẩn đoán
+  const generateSummary = () => {
     const { diagnosis } = formData;
-    let recommendations = [];
     let hairCondition = "Tốt";
     let priority = "Thấp";
     
-    // Phân tích độ đàn hồi
-    if (diagnosis.elasticity === 'weak') {
-      recommendations.push({
-        issue: "Độ đàn hồi yếu",
-        treatment: "DEFY DAMAGE Protective Treatment",
-        reason: "Tóc thiếu protein, cần phục hồi cấu trúc",
-        price: "800.000 VNĐ"
-      });
+    // Phân tích tổng thể
+    const weakCount = [diagnosis.elasticity, diagnosis.porosityTest, diagnosis.strength].filter(x => x === 'weak').length;
+    const averageCount = [diagnosis.elasticity, diagnosis.porosityTest, diagnosis.strength].filter(x => x === 'average').length;
+    
+    if (weakCount >= 2) {
       hairCondition = "Hư tổn nặng";
       priority = "Cao";
-    } else if (diagnosis.elasticity === 'average') {
-      recommendations.push({
-        issue: "Độ đàn hồi trung bình",
-        treatment: "Keratin Smoothing Treatment",
-        reason: "Tăng cường độ bền và mềm mượt",
-        price: "600.000 VNĐ"
-      });
+    } else if (weakCount === 1 || averageCount >= 2) {
       hairCondition = "Trung bình";
       priority = "Trung bình";
-    }
-
-    // Phân tích Porosity Test
-    if (diagnosis.porosityTest === 'weak') {
-      recommendations.push({
-        issue: "Độ ẩm kém - tóc hư tổn nặng",
-        treatment: "Deep Moisture Repair",
-        reason: "Tóc chìm nhanh, lớp biểu bì hở",
-        price: "700.000 VNĐ"
-      });
-      if (hairCondition !== "Hư tổn nặng") hairCondition = "Hư tổn nặng";
-      priority = "Cao";
-    } else if (diagnosis.porosityTest === 'average') {
-      recommendations.push({
-        issue: "Độ ẩm trung bình",
-        treatment: "Hydrating Treatment",
-        reason: "Cần dưỡng ẩm để cân bằng",
-        price: "500.000 VNĐ"
-      });
-    }
-
-    // Phân tích Strength
-    if (diagnosis.strength === 'weak') {
-      recommendations.push({
-        issue: "Độ chắc yếu",
-        treatment: "Protein Reconstruction",
-        reason: "Tóc dễ gãy, thiếu protein",
-        price: "650.000 VNĐ"
-      });
-      if (priority !== "Cao") priority = "Cao";
-    }
-
-    // Nếu không có vấn đề nghiêm trọng
-    if (recommendations.length === 0) {
-      recommendations.push({
-        issue: "Tóc khỏe mạnh",
-        treatment: "Maintenance Treatment",
-        reason: "Duy trì tình trạng tốt của tóc",
-        price: "400.000 VNĐ"
-      });
     }
 
     return {
       hairCondition,
       priority,
-      recommendations,
       summary: {
         elasticity: diagnosis.elasticity || 'Chưa đánh giá',
         porosity: diagnosis.porosityTest || 'Chưa đánh giá', 
@@ -219,20 +168,30 @@ const ConsultationForm = () => {
   };
 
   const saveForm = async () => {
-    console.log('Save form clicked, formData:', formData); // Debug log
+    console.log('🔥 Save form clicked!', formData); // Debug log
     
     try {
       // Validate required fields
       if (!formData.customerInfo.name || !formData.customerInfo.phone) {
-        alert('Vui lòng nhập đầy đủ Họ tên và Số điện thoại!');
+        alert('❌ Vui lòng nhập đầy đủ Họ tên và Số điện thoại!');
         return;
       }
 
-      console.log('Saving consultation to Firestore...'); // Debug log
+      console.log('💾 Saving consultation to Firestore...'); // Debug log
+      
+      // Simple test save first
+      const testData = {
+        customerName: formData.customerInfo.name,
+        customerPhone: formData.customerInfo.phone,
+        timestamp: new Date().toISOString(),
+        step: currentStep
+      };
+      
+      console.log('📝 Test data:', testData);
       
       // Save consultation data to Firestore
-      await consultationService.add(formData);
-      console.log('Consultation saved successfully'); // Debug log
+      await consultationService.add(testData);
+      console.log('✅ Consultation saved successfully'); // Debug log
       
       // Also add/update customer if they don't exist
       let customerData = null;
@@ -759,7 +718,7 @@ const ConsultationForm = () => {
   );
 
   const renderStep3 = () => {
-    const analysis = generateRecommendations();
+    const analysis = generateSummary();
     
     return (
       <div className="space-y-6">

@@ -127,7 +127,7 @@ const ConsultationForm = () => {
   };
 
   const nextStep = () => {
-    if (currentStep < 5) {
+    if (currentStep < 4) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -812,26 +812,38 @@ const ConsultationForm = () => {
                       <div className="flex items-center gap-3">
                         <span className="font-medium">20%</span>
                         <input type="checkbox" className="w-4 h-4 text-burgundy-500 focus:ring-burgundy-500 border-gray-300 rounded" />
-                        <span className="text-sm">Vẫn đề còn lại</span>
-                        <div className="flex-1 border-b border-dotted border-gray-400"></div>
+                        <span className="text-sm">Vấn đề còn lại</span>
+                        <textarea 
+                          className="flex-1 h-8 border-none border-b border-dotted border-gray-400 bg-transparent resize-none focus:outline-none focus:border-burgundy-500"
+                          placeholder="Ghi chú vấn đề còn lại..."
+                        />
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="font-medium">40%</span>
                         <input type="checkbox" className="w-4 h-4 text-burgundy-500 focus:ring-burgundy-500 border-gray-300 rounded" />
-                        <span className="text-sm">Vẫn đề còn lại</span>
-                        <div className="flex-1 border-b border-dotted border-gray-400"></div>
+                        <span className="text-sm">Vấn đề còn lại</span>
+                        <textarea 
+                          className="flex-1 h-8 border-none border-b border-dotted border-gray-400 bg-transparent resize-none focus:outline-none focus:border-burgundy-500"
+                          placeholder="Ghi chú vấn đề còn lại..."
+                        />
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="font-medium">70%</span>
                         <input type="checkbox" className="w-4 h-4 text-burgundy-500 focus:ring-burgundy-500 border-gray-300 rounded" />
-                        <span className="text-sm">Vẫn đề còn lại</span>
-                        <div className="flex-1 border-b border-dotted border-gray-400"></div>
+                        <span className="text-sm">Vấn đề còn lại</span>
+                        <textarea 
+                          className="flex-1 h-8 border-none border-b border-dotted border-gray-400 bg-transparent resize-none focus:outline-none focus:border-burgundy-500"
+                          placeholder="Ghi chú vấn đề còn lại..."
+                        />
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="font-medium">100%</span>
                         <input type="checkbox" className="w-4 h-4 text-burgundy-500 focus:ring-burgundy-500 border-gray-300 rounded" />
-                        <span className="text-sm">Vẫn đề còn lại</span>
-                        <div className="flex-1 border-b border-dotted border-gray-400"></div>
+                        <span className="text-sm">Vấn đề còn lại</span>
+                        <textarea 
+                          className="flex-1 h-8 border-none border-b border-dotted border-gray-400 bg-transparent resize-none focus:outline-none focus:border-burgundy-500"
+                          placeholder="Ghi chú vấn đề còn lại..."
+                        />
                       </div>
                     </div>
                   </td>
@@ -920,40 +932,6 @@ const ConsultationForm = () => {
     </div>
   );
 
-  const renderStep5 = () => (
-    <div className="space-y-6">
-      {/* LỊCH HẸN KẾ TIẾP */}
-      <div>
-        <Label className="text-base font-semibold">5/ LỊCH HẸN KẾ TIẾP:</Label>
-        <div className="mt-4 space-y-4">
-          <div className="border-b border-dotted border-gray-400 pb-2">
-            <textarea 
-              className="w-full h-16 border-none resize-none bg-transparent focus:outline-none"
-              placeholder="Ghi chú về lịch hẹn kế tiếp..."
-            />
-          </div>
-          <div className="border-b border-dotted border-gray-400 pb-2">
-            <textarea 
-              className="w-full h-16 border-none resize-none bg-transparent focus:outline-none"
-              placeholder="Thêm ghi chú..."
-            />
-          </div>
-          <div className="border-b border-dotted border-gray-400 pb-2">
-            <textarea 
-              className="w-full h-16 border-none resize-none bg-transparent focus:outline-none"
-              placeholder="Thêm ghi chú..."
-            />
-          </div>
-          <div className="border-b border-dotted border-gray-400 pb-2">
-            <textarea 
-              className="w-full h-16 border-none resize-none bg-transparent focus:outline-none"
-              placeholder="Thêm ghi chú..."
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -1000,7 +978,6 @@ const ConsultationForm = () => {
           {currentStep === 2 && renderStep2()}
           {currentStep === 3 && renderStep3()}
           {currentStep === 4 && renderStep4()}
-          {currentStep === 5 && renderStep5()}
         </CardContent>
       </Card>
 
@@ -1017,16 +994,18 @@ const ConsultationForm = () => {
         </Button>
 
         <div className="flex gap-4">
-          <Button
-            variant="outline"
-            onClick={saveForm}
-            className="border-burgundy-500 text-burgundy-500 hover:bg-burgundy-50"
-          >
-            <Save size={16} className="mr-2" />
-            Lưu & Gửi Email
-          </Button>
+          {currentStep < 4 && (
+            <Button
+              variant="outline"
+              onClick={saveForm}
+              className="border-burgundy-500 text-burgundy-500 hover:bg-burgundy-50"
+            >
+              <Save size={16} className="mr-2" />
+              Lưu tạm
+            </Button>
+          )}
 
-          {currentStep < 5 ? (
+          {currentStep < 4 ? (
             <Button
               onClick={nextStep}
               className="bg-burgundy-500 hover:bg-burgundy-600"
@@ -1037,10 +1016,10 @@ const ConsultationForm = () => {
           ) : (
             <Button
               onClick={saveForm}
-              className="bg-burgundy-500 hover:bg-burgundy-600"
+              className="bg-green-500 hover:bg-green-600"
             >
               <FileText size={16} className="mr-2" />
-              Hoàn thành
+              Lưu & Gửi Email
             </Button>
           )}
         </div>

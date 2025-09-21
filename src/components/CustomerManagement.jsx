@@ -33,7 +33,8 @@ const CustomerManagement = () => {
     birthday: '',
     gender: '',
     hairCondition: '',
-    treatments: []
+    treatments: [],
+    notes: '' // Thêm trường ghi chú
   });
   const fileInputRef = useRef(null);
 
@@ -56,7 +57,8 @@ const CustomerManagement = () => {
               status: 'active',
               hairCondition: 'Tóc khô, hư tổn',
               treatments: ['DEFY DAMAGE', 'Keratin'],
-              nextAppointment: '2025-02-15'
+              nextAppointment: '2025-02-15',
+              notes: 'Khách hàng VIP, thích sản phẩm cao cấp'
             },
             {
               name: 'Trần Văn Minh',
@@ -69,7 +71,8 @@ const CustomerManagement = () => {
               status: 'active',
               hairCondition: 'Tóc mỏng, rụng nhiều',
               treatments: ['Amino', 'Massage'],
-              nextAppointment: '2025-02-10'
+              nextAppointment: '2025-02-10',
+              notes: 'Cần chăm sóc đặc biệt cho tóc mỏng'
             },
             {
               name: 'Lê Thị Hoa',
@@ -82,7 +85,8 @@ const CustomerManagement = () => {
               status: 'inactive',
               hairCondition: 'Tóc nhuộm, cần dưỡng',
               treatments: ['DEFY DAMAGE', 'Color Care'],
-              nextAppointment: null
+              nextAppointment: null,
+              notes: 'Khách hàng cũ, cần liên hệ lại'
             }
           ];
           
@@ -139,16 +143,17 @@ const CustomerManagement = () => {
 
       await customerService.add(customerToAdd);
       
-      // Reset form
-      setNewCustomer({
-        name: '',
-        phone: '',
-        email: '',
-        birthday: '',
-        gender: '',
-        hairCondition: '',
-        treatments: []
-      });
+        // Reset form
+        setNewCustomer({
+          name: '',
+          phone: '',
+          email: '',
+          birthday: '',
+          gender: '',
+          hairCondition: '',
+          treatments: [],
+          notes: ''
+        });
       setShowAddForm(false);
       alert('Thêm khách hàng thành công!');
     } catch (error) {
@@ -194,7 +199,8 @@ const CustomerManagement = () => {
       'Lần đến cuối': customer.lastVisit,
       'Tổng số lần đến': customer.totalVisits,
       'Trạng thái': customer.status === 'active' ? 'Hoạt động' : 'Không hoạt động',
-      'Lịch hẹn tiếp theo': customer.nextAppointment || ''
+      'Lịch hẹn tiếp theo': customer.nextAppointment || '',
+      'Ghi chú': customer.notes || ''
     }));
 
     const ws = XLSX.utils.json_to_sheet(exportData);
@@ -213,7 +219,8 @@ const CustomerManagement = () => {
       { wch: 12 }, // Lần đến cuối
       { wch: 12 }, // Tổng số lần đến
       { wch: 12 }, // Trạng thái
-      { wch: 15 }  // Lịch hẹn tiếp theo
+      { wch: 15 }, // Lịch hẹn tiếp theo
+      { wch: 40 }  // Ghi chú
     ];
     ws['!cols'] = colWidths;
     
@@ -245,7 +252,8 @@ const CustomerManagement = () => {
           lastVisit: new Date().toISOString().split('T')[0],
           totalVisits: parseInt(row['Tổng số lần đến']) || 0,
           status: 'active',
-          nextAppointment: row['Lịch hẹn tiếp theo'] || null
+          nextAppointment: row['Lịch hẹn tiếp theo'] || null,
+          notes: row['Ghi chú'] || ''
         })).filter(customer => customer.name && customer.phone); // Only import rows with name and phone
 
         if (importedCustomers.length > 0) {
@@ -336,10 +344,17 @@ const CustomerManagement = () => {
                     {treatment}
                   </Badge>
                 ))}
-              </div>
-            </div>
+                    </div>
+                  </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label className="font-semibold">Ghi chú</Label>
+                    <p className="text-gray-700 bg-gray-50 p-3 rounded-md">
+                      {selectedCustomer.notes || 'Chưa có ghi chú'}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label className="font-semibold">Lần đến cuối</Label>
                 <p className="text-gray-700">{selectedCustomer.lastVisit}</p>
@@ -531,6 +546,13 @@ const CustomerManagement = () => {
                         </Badge>
                       ))}
                     </div>
+
+                    {customer.notes && (
+                      <div className="mt-2">
+                        <span className="text-sm text-gray-500">Ghi chú: </span>
+                        <span className="text-sm text-gray-700">{customer.notes}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex gap-2">
@@ -636,16 +658,27 @@ const CustomerManagement = () => {
                     </select>
                   </div>
                 </div>
-                <div>
-                  <Label htmlFor="new-hair-condition">Tình trạng tóc</Label>
-                  <Input
-                    id="new-hair-condition"
-                    value={newCustomer.hairCondition}
-                    onChange={(e) => handleNewCustomerChange('hairCondition', e.target.value)}
-                    placeholder="Mô tả tình trạng tóc hiện tại"
-                  />
-                </div>
-              </div>
+                        <div>
+                          <Label htmlFor="new-hair-condition">Tình trạng tóc</Label>
+                          <Input
+                            id="new-hair-condition"
+                            value={newCustomer.hairCondition}
+                            onChange={(e) => handleNewCustomerChange('hairCondition', e.target.value)}
+                            placeholder="Mô tả tình trạng tóc hiện tại"
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <Label htmlFor="new-notes">Ghi chú</Label>
+                          <textarea
+                            id="new-notes"
+                            value={newCustomer.notes}
+                            onChange={(e) => handleNewCustomerChange('notes', e.target.value)}
+                            placeholder="Ghi chú thêm về khách hàng..."
+                            rows={3}
+                            className="w-full mt-2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent resize-none"
+                          />
+                        </div>
+                      </div>
 
               <div className="flex justify-end gap-2 mt-6">
                 <Button

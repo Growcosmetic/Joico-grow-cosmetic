@@ -26,6 +26,8 @@ const CustomerManagement = () => {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState(null);
   const [newCustomer, setNewCustomer] = useState({
     name: '',
     phone: '',
@@ -168,6 +170,55 @@ const CustomerManagement = () => {
       ...prev,
       [field]: value
     }));
+  };
+
+  // Handle input changes for edit customer form
+  const handleEditCustomerChange = (field, value) => {
+    setEditingCustomer(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Handle editing customer
+  const handleEditCustomer = (customer) => {
+    setEditingCustomer({ ...customer });
+    setShowEditForm(true);
+  };
+
+  // Handle updating customer
+  const handleUpdateCustomer = async () => {
+    if (!editingCustomer.name || !editingCustomer.phone) {
+      alert('Vui lòng nhập tên và số điện thoại!');
+      return;
+    }
+
+    try {
+      await customerService.update(editingCustomer.id, editingCustomer);
+      setShowEditForm(false);
+      setEditingCustomer(null);
+      alert('Cập nhật thông tin khách hàng thành công!');
+    } catch (error) {
+      console.error('Error updating customer:', error);
+      alert('Có lỗi khi cập nhật thông tin khách hàng. Vui lòng thử lại!');
+    }
+  };
+
+  // Handle deleting customer
+  const handleDeleteCustomer = async (customer) => {
+    const confirmDelete = window.confirm(
+      `Bạn có chắc chắn muốn xóa khách hàng "${customer.name}"?\n\nHành động này không thể hoàn tác!`
+    );
+
+    if (confirmDelete) {
+      try {
+        await customerService.delete(customer.id);
+        alert('Xóa khách hàng thành công!');
+      } catch (error) {
+        console.error('Error deleting customer:', error);
+        alert('Có lỗi khi xóa khách hàng. Vui lòng thử lại!');
+      }
+    }
   };
 
   const getStatusBadge = (status) => {
@@ -380,7 +431,13 @@ const CustomerManagement = () => {
             >
               Đóng
             </Button>
-            <Button className="bg-burgundy-500 hover:bg-burgundy-600">
+            <Button 
+              className="bg-burgundy-500 hover:bg-burgundy-600"
+              onClick={() => {
+                setShowDetails(false);
+                handleEditCustomer(selectedCustomer);
+              }}
+            >
               <Edit size={16} className="mr-2" />
               Chỉnh sửa
             </Button>
@@ -568,10 +625,20 @@ const CustomerManagement = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="border-gray-300 text-gray-600 hover:bg-gray-50"
+                      onClick={() => handleEditCustomer(customer)}
+                      className="border-blue-500 text-blue-500 hover:bg-blue-50"
                     >
                       <Edit size={16} className="mr-1" />
                       Sửa
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteCustomer(customer)}
+                      className="border-red-500 text-red-500 hover:bg-red-50"
+                    >
+                      <Trash2 size={16} className="mr-1" />
+                      Xóa
                     </Button>
                   </div>
                 </div>
@@ -693,6 +760,169 @@ const CustomerManagement = () => {
                   className="bg-burgundy-500 hover:bg-burgundy-600"
                 >
                   Thêm khách hàng
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Edit Customer Form */}
+      {showEditForm && editingCustomer && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4">
+            <CardHeader>
+              <CardTitle>Chỉnh sửa thông tin khách hàng</CardTitle>
+              <CardDescription>
+                Cập nhật thông tin khách hàng: {editingCustomer.name}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="edit-name">Họ và tên *</Label>
+                    <Input
+                      id="edit-name"
+                      value={editingCustomer.name}
+                      onChange={(e) => handleEditCustomerChange('name', e.target.value)}
+                      placeholder="Nhập họ và tên"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-phone">Số điện thoại *</Label>
+                    <Input
+                      id="edit-phone"
+                      value={editingCustomer.phone}
+                      onChange={(e) => handleEditCustomerChange('phone', e.target.value)}
+                      placeholder="Nhập số điện thoại"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-email">Email</Label>
+                    <Input
+                      id="edit-email"
+                      type="email"
+                      value={editingCustomer.email}
+                      onChange={(e) => handleEditCustomerChange('email', e.target.value)}
+                      placeholder="Nhập email"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-birthday">Ngày sinh</Label>
+                    <Input
+                      id="edit-birthday"
+                      type="date"
+                      value={editingCustomer.birthday}
+                      onChange={(e) => handleEditCustomerChange('birthday', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-gender">Giới tính</Label>
+                    <select
+                      id="edit-gender"
+                      value={editingCustomer.gender}
+                      onChange={(e) => handleEditCustomerChange('gender', e.target.value)}
+                      className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
+                    >
+                      <option value="">Chọn giới tính</option>
+                      <option value="male">Nam</option>
+                      <option value="female">Nữ</option>
+                      <option value="other">Khác</option>
+                    </select>
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-status">Trạng thái</Label>
+                    <select
+                      id="edit-status"
+                      value={editingCustomer.status}
+                      onChange={(e) => handleEditCustomerChange('status', e.target.value)}
+                      className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
+                    >
+                      <option value="active">Đang hoạt động</option>
+                      <option value="inactive">Không hoạt động</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="edit-hair-condition">Tình trạng tóc</Label>
+                  <Input
+                    id="edit-hair-condition"
+                    value={editingCustomer.hairCondition}
+                    onChange={(e) => handleEditCustomerChange('hairCondition', e.target.value)}
+                    placeholder="Mô tả tình trạng tóc hiện tại"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-treatments">Liệu trình đã thực hiện</Label>
+                  <Input
+                    id="edit-treatments"
+                    value={editingCustomer.treatments.join(', ')}
+                    onChange={(e) => handleEditCustomerChange('treatments', e.target.value.split(', ').filter(t => t.trim()))}
+                    placeholder="Nhập các liệu trình, cách nhau bởi dấu phẩy"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="edit-notes">Ghi chú</Label>
+                  <textarea
+                    id="edit-notes"
+                    value={editingCustomer.notes}
+                    onChange={(e) => handleEditCustomerChange('notes', e.target.value)}
+                    placeholder="Ghi chú thêm về khách hàng..."
+                    rows={3}
+                    className="w-full mt-2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent resize-none"
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="edit-last-visit">Lần đến cuối</Label>
+                    <Input
+                      id="edit-last-visit"
+                      type="date"
+                      value={editingCustomer.lastVisit}
+                      onChange={(e) => handleEditCustomerChange('lastVisit', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-total-visits">Tổng số lần đến</Label>
+                    <Input
+                      id="edit-total-visits"
+                      type="number"
+                      min="0"
+                      value={editingCustomer.totalVisits}
+                      onChange={(e) => handleEditCustomerChange('totalVisits', parseInt(e.target.value) || 0)}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="edit-next-appointment">Lịch hẹn tiếp theo</Label>
+                  <Input
+                    id="edit-next-appointment"
+                    type="date"
+                    value={editingCustomer.nextAppointment || ''}
+                    onChange={(e) => handleEditCustomerChange('nextAppointment', e.target.value || null)}
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowEditForm(false);
+                    setEditingCustomer(null);
+                  }}
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                >
+                  Hủy
+                </Button>
+                <Button 
+                  onClick={handleUpdateCustomer}
+                  className="bg-burgundy-500 hover:bg-burgundy-600"
+                >
+                  Cập nhật
                 </Button>
               </div>
             </CardContent>

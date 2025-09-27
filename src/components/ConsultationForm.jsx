@@ -167,44 +167,52 @@ const ConsultationForm = () => {
     };
   };
 
-  // Function gửi email đơn giản
-  const sendEmails = async (customerData) => {
-    if (!customerData.email) {
-      return { success: false, message: 'Khách hàng chưa có email' };
-    }
+          // Function gửi email với EmailJS
+          const sendEmails = async (customerData) => {
+            if (!customerData.email) {
+              return { success: false, message: 'Khách hàng chưa có email' };
+            }
 
-    try {
-      // EmailJS config đơn giản - bạn cần cập nhật với thông tin thật
-      const emailData = {
-        to_email: customerData.email,
-        customer_name: customerData.name,
-        customer_phone: customerData.phone,
-        consultation_date: new Date().toLocaleDateString('vi-VN'),
-        salon_name: 'CHÍ TÂM Hair Salon',
-        salon_phone: '0938 987 733',
-        salon_address: '14-16-18 Lê Thị Riêng, P.Bến Thành, TP.HCM',
-        message: `Cảm ơn ${customerData.name} đã đến tư vấn tại CHÍ TÂM Hair Salon ngày ${new Date().toLocaleDateString('vi-VN')}. 
-        
-Chúng tôi sẽ liên hệ sớm để hẹn lịch điều trị phù hợp.
+            try {
+              // EmailJS configuration
+              const emailData = {
+                customer_name: customerData.name,
+                customer_phone: customerData.phone,
+                consultation_date: new Date().toLocaleDateString('vi-VN'),
+                salon_name: 'CHÍ TÂM Hair Salon',
+                salon_phone: '0938 987 733',
+                salon_address: '14-16-18 Lê Thị Riêng, P.Bến Thành, TP.HCM',
+                to_email: customerData.email
+              };
 
-Trân trọng,
-CHÍ TÂM Hair Salon
-📞 0938 987 733
-📍 14-16-18 Lê Thị Riêng, P.Bến Thành, TP.HCM`
-      };
-
-      // Tạm thời return success để test (bạn cần setup EmailJS thật)
-      console.log('📧 Email data prepared:', emailData);
-      
-      // Uncomment dòng này khi đã setup EmailJS:
-      // await emailjs.send('service_id', 'template_id', emailData, 'public_key');
-      
-      return { success: true, message: 'Email đã được chuẩn bị (cần setup EmailJS)' };
-    } catch (error) {
-      console.error('Email error:', error);
-      return { success: false, message: 'Lỗi gửi email: ' + error.message };
-    }
-  };
+              console.log('📧 Sending email with data:', emailData);
+              console.log('📧 EmailJS config:', {
+                serviceId: 'Chitam-service',
+                templateId: 'template_yaz8cmo',
+                publicKey: 'LEZjGYiu_RWn76QP6'
+              });
+              
+              // Gửi email thực tế với EmailJS
+              const result = await emailjs.send(
+                'Chitam-service',            // Service ID
+                'template_yaz8cmo',         // Template ID
+                emailData,                   // Template data
+                'LEZjGYiu_RWn76QP6'         // Public Key
+              );
+              
+              console.log('✅ Email sent successfully:', result);
+              return { success: true, message: 'Email đã được gửi thành công!' };
+            } catch (error) {
+              console.error('❌ Email error details:', {
+                error: error,
+                message: error.message,
+                status: error.status,
+                text: error.text,
+                stack: error.stack
+              });
+              return { success: false, message: 'Lỗi gửi email: ' + (error.message || error.text || error.toString() || 'Không xác định') };
+            }
+          };
 
   const saveForm = async () => {
     console.log('🔥 Save form clicked!', formData); // Debug log
@@ -274,19 +282,19 @@ CHÍ TÂM Hair Salon
         console.warn('⚠️ Customer Firestore save failed:', firestoreError);
       }
       
-      // Gửi email nếu có email khách hàng
-      let emailStatus = '';
-      if (customerData.email) {
-        console.log('📧 Attempting to send email...');
-        const emailResult = await sendEmails(customerData);
-        if (emailResult.success) {
-          emailStatus = '\n📧 Email thông báo đã được gửi cho khách hàng!';
-        } else {
-          emailStatus = '\n⚠️ ' + emailResult.message;
-        }
-      } else {
-        emailStatus = '\n💡 Tip: Nhập email khách hàng để gửi thông báo tự động';
-      }
+              // Gửi email nếu có email khách hàng
+              let emailStatus = '';
+              if (customerData.email) {
+                console.log('📧 Attempting to send email...');
+                const emailResult = await sendEmails(customerData);
+                if (emailResult.success) {
+                  emailStatus = '\n📧 Email thông báo đã được gửi thành công cho khách hàng!';
+                } else {
+                  emailStatus = '\n⚠️ ' + emailResult.message;
+                }
+              } else {
+                emailStatus = '\n💡 Tip: Nhập email khách hàng để gửi thông báo tự động';
+              }
 
       // Success message
       alert('✅ DỮ LIỆU TƯ VẤN ĐÃ ĐƯỢC LƯU THÀNH CÔNG!\n\n👤 Khách hàng: ' + customerData.name + '\n📞 SĐT: ' + customerData.phone + '\n📅 Ngày tư vấn: ' + new Date().toLocaleDateString('vi-VN') + emailStatus + '\n\n💾 Dữ liệu đã được lưu trữ an toàn!');

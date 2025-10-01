@@ -52,10 +52,22 @@ const CustomerManagement = () => {
   });
   const fileInputRef = useRef(null);
 
-  // Load customers from Firestore on component mount
+  // Load customers from localStorage first, then Firestore
   useEffect(() => {
     const loadCustomers = async () => {
       try {
+        // Ưu tiên load từ localStorage trước
+        const localCustomers = JSON.parse(localStorage.getItem('customers') || '[]');
+        console.log('📱 Loading from localStorage:', localCustomers.length, 'customers');
+        
+        if (localCustomers.length > 0) {
+          setCustomers(localCustomers);
+          console.log('✅ Using localStorage data');
+          return;
+        }
+        
+        // Nếu localStorage trống, thử load từ Firestore
+        console.log('🔄 localStorage empty, trying Firestore...');
         const customersData = await customerService.getAll();
         if (customersData.length === 0) {
           // Add sample data if no customers exist
@@ -112,8 +124,12 @@ const CustomerManagement = () => {
           // Reload customers after adding samples
           const newCustomersData = await customerService.getAll();
           setCustomers(newCustomersData);
+          localStorage.setItem('customers', JSON.stringify(newCustomersData));
+          console.log('💾 Saved sample data to localStorage');
         } else {
           setCustomers(customersData);
+          localStorage.setItem('customers', JSON.stringify(customersData));
+          console.log('💾 Saved Firestore data to localStorage');
         }
       } catch (error) {
         console.error('Error loading customers:', error);
@@ -123,9 +139,15 @@ const CustomerManagement = () => {
 
     loadCustomers();
 
-    // Setup real-time listener
+    // Setup real-time listener (chỉ sync từ Firestore, không ghi đè localStorage)
     const unsubscribe = customerService.onSnapshot((customersData) => {
-      setCustomers(customersData);
+      // Chỉ cập nhật nếu localStorage trống
+      const localCustomers = JSON.parse(localStorage.getItem('customers') || '[]');
+      if (localCustomers.length === 0) {
+        setCustomers(customersData);
+        localStorage.setItem('customers', JSON.stringify(customersData));
+        console.log('🔄 Synced from Firestore to localStorage');
+      }
     });
 
     // Cleanup listener on component unmount

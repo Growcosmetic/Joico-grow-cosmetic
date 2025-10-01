@@ -45,6 +45,13 @@ const ConsultationForm = () => {
       setCustomers(JSON.parse(savedCustomers));
     }
   }, []);
+  const [matchedCustomers, setMatchedCustomers] = useState([]); // Danh sách khách trùng lặp
+  const [showMatchAlert, setShowMatchAlert] = useState(false); // Hiển thị cảnh báo trùng lặp
+  const [showNameSuggestions, setShowNameSuggestions] = useState(false); // Hiển thị gợi ý tên
+  const [showPhoneSuggestions, setShowPhoneSuggestions] = useState(false); // Hiển thị gợi ý SĐT
+  const [nameSuggestions, setNameSuggestions] = useState([]); // Danh sách gợi ý tên
+  const [phoneSuggestions, setPhoneSuggestions] = useState([]); // Danh sách gợi ý SĐT
+
   const [formData, setFormData] = useState({
     // Step 1: Questionnaire
     customerInfo: {
@@ -130,6 +137,80 @@ const ConsultationForm = () => {
     { value: 'low', label: 'Kém' }
   ];
 
+  // Hàm tìm gợi ý tên khách hàng
+  const searchNameSuggestions = (searchTerm) => {
+    if (!searchTerm || searchTerm.length < 2) {
+      setNameSuggestions([]);
+      setShowNameSuggestions(false);
+      return;
+    }
+
+    const suggestions = customers.filter(customer => 
+      customer.name.toLowerCase().includes(searchTerm.toLowerCase())
+    ).slice(0, 5); // Giới hạn 5 gợi ý
+
+    setNameSuggestions(suggestions);
+    setShowNameSuggestions(suggestions.length > 0);
+  };
+
+  // Hàm tìm gợi ý số điện thoại
+  const searchPhoneSuggestions = (searchTerm) => {
+    if (!searchTerm || searchTerm.length < 3) {
+      setPhoneSuggestions([]);
+      setShowPhoneSuggestions(false);
+      return;
+    }
+
+    const suggestions = customers.filter(customer => 
+      customer.phone.includes(searchTerm)
+    ).slice(0, 5); // Giới hạn 5 gợi ý
+
+    setPhoneSuggestions(suggestions);
+    setShowPhoneSuggestions(suggestions.length > 0);
+  };
+
+  // Hàm chọn khách hàng từ gợi ý
+  const selectCustomerFromSuggestion = (customer) => {
+    setFormData(prev => ({
+      ...prev,
+      customerInfo: {
+        ...prev.customerInfo,
+        name: customer.name,
+        phone: customer.phone,
+        email: customer.email || '',
+        birthday: customer.birthday || '',
+        gender: customer.gender || ''
+      }
+    }));
+    setShowNameSuggestions(false);
+    setShowPhoneSuggestions(false);
+    setNameSuggestions([]);
+    setPhoneSuggestions([]);
+  };
+
+  // Hàm kiểm tra khách hàng trùng lặp khi nhập SĐT hoặc tên
+  const checkDuplicateCustomers = (phone, name) => {
+    if (!phone && !name) {
+      setMatchedCustomers([]);
+      setShowMatchAlert(false);
+      return;
+    }
+
+    const matches = customers.filter(customer => {
+      const phoneMatch = phone && customer.phone === phone;
+      const nameMatch = name && customer.name.toLowerCase() === name.toLowerCase();
+      return phoneMatch || nameMatch;
+    });
+
+    if (matches.length > 0) {
+      setMatchedCustomers(matches);
+      setShowMatchAlert(true);
+    } else {
+      setMatchedCustomers([]);
+      setShowMatchAlert(false);
+    }
+  };
+
   const handleInputChange = (section, field, value) => {
     setFormData(prev => ({
       ...prev,
@@ -138,6 +219,17 @@ const ConsultationForm = () => {
         [field]: value
       }
     }));
+
+    // Tìm gợi ý và kiểm tra trùng lặp khi nhập SĐT hoặc tên
+    if (section === 'customerInfo') {
+      if (field === 'phone') {
+        searchPhoneSuggestions(value);
+        checkDuplicateCustomers(value, formData.customerInfo.name);
+      } else if (field === 'name') {
+        searchNameSuggestions(value);
+        checkDuplicateCustomers(formData.customerInfo.phone, value);
+      }
+    }
   };
 
   const handleArrayChange = (section, field, value, checked) => {
@@ -483,23 +575,92 @@ const ConsultationForm = () => {
   const renderStep1 = () => (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
+        {/* Ô nhập tên với autocomplete */}
+        <div className="relative">
           <Label htmlFor="name">Họ và tên *</Label>
           <Input
             id="name"
             value={formData.customerInfo.name}
             onChange={(e) => handleInputChange('customerInfo', 'name', e.target.value)}
+            onFocus={() => {
+              if (formData.customerInfo.name.length >= 2) {
+                searchNameSuggestions(formData.customerInfo.name);
+              }
+            }}
+            onBlur={() => {
+              // Delay để click vào suggestion có hiệu lực
+              setTimeout(() => setShowNameSuggestions(false), 200);
+            }}
             placeholder="Nhập họ và tên khách hàng"
+            autoComplete="off"
           />
+          {/* Dropdown gợi ý tên */}
+          {showNameSuggestions && nameSuggestions.length > 0 && (
+            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+              {nameSuggestions.map((customer) => (
+                <div
+                  key={customer.id}
+                  className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                  onClick={() => selectCustomerFromSuggestion(customer)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-gray-900">{customer.name}</p>
+                      <p className="text-sm text-gray-600">📞 {customer.phone}</p>
+                      {customer.lastVisit && (
+                        <p className="text-xs text-gray-500">Lần cuối: {customer.lastVisit}</p>
+                      )}
+                    </div>
+                    <span className="text-blue-600 text-sm font-medium">Chọn →</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-        <div>
+
+        {/* Ô nhập SĐT với autocomplete */}
+        <div className="relative">
           <Label htmlFor="phone">Số điện thoại *</Label>
           <Input
             id="phone"
             value={formData.customerInfo.phone}
             onChange={(e) => handleInputChange('customerInfo', 'phone', e.target.value)}
+            onFocus={() => {
+              if (formData.customerInfo.phone.length >= 3) {
+                searchPhoneSuggestions(formData.customerInfo.phone);
+              }
+            }}
+            onBlur={() => {
+              // Delay để click vào suggestion có hiệu lực
+              setTimeout(() => setShowPhoneSuggestions(false), 200);
+            }}
             placeholder="Nhập số điện thoại"
+            autoComplete="off"
           />
+          {/* Dropdown gợi ý SĐT */}
+          {showPhoneSuggestions && phoneSuggestions.length > 0 && (
+            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+              {phoneSuggestions.map((customer) => (
+                <div
+                  key={customer.id}
+                  className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                  onClick={() => selectCustomerFromSuggestion(customer)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-gray-900">{customer.phone}</p>
+                      <p className="text-sm text-gray-600">👤 {customer.name}</p>
+                      {customer.lastVisit && (
+                        <p className="text-xs text-gray-500">Lần cuối: {customer.lastVisit}</p>
+                      )}
+                    </div>
+                    <span className="text-blue-600 text-sm font-medium">Chọn →</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -539,59 +700,117 @@ const ConsultationForm = () => {
         </div>
       </div>
 
+      {/* Cảnh báo khách hàng trùng lặp */}
+      {showMatchAlert && matchedCustomers.length > 0 && (
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3 flex-1">
+              <h3 className="text-sm font-medium text-yellow-800">
+                Tìm thấy {matchedCustomers.length} khách hàng trùng lặp!
+              </h3>
+              <div className="mt-2 text-sm text-yellow-700">
+                <p className="mb-2">Có thể là người thân hoặc khách hàng cũ:</p>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {matchedCustomers.map(customer => (
+                    <div key={customer.id} className="bg-white p-3 rounded border border-yellow-200">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-gray-900">{customer.name}</p>
+                          <p className="text-xs text-gray-600">📞 {customer.phone}</p>
+                          {customer.email && <p className="text-xs text-gray-600">✉️ {customer.email}</p>}
+                          {customer.lastVisit && (
+                            <p className="text-xs text-gray-500">Lần cuối: {customer.lastVisit}</p>
+                          )}
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="ml-2"
+                          onClick={() => {
+                            handleInputChange('customerInfo', 'relatedCustomer', customer.id);
+                            setShowMatchAlert(false);
+                          }}
+                        >
+                          Liên kết
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="mt-2 text-yellow-800 hover:text-yellow-900"
+                onClick={() => setShowMatchAlert(false)}
+              >
+                Đóng cảnh báo
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Người thân liên quan */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <Label className="text-base font-semibold flex items-center gap-2">
-          <Users size={20} className="text-blue-600" />
-          Người thân liên quan (nếu có)
-        </Label>
-        <p className="text-sm text-gray-600 mt-1 mb-3">
-          Liên kết với khách hàng khác nếu họ là người thân dùng chung số điện thoại
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="relatedCustomer">Chọn khách hàng</Label>
-            <select
-              id="relatedCustomer"
-              value={formData.customerInfo.relatedCustomer || ''}
-              onChange={(e) => handleInputChange('customerInfo', 'relatedCustomer', e.target.value || null)}
-              className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">-- Không có --</option>
-              {customers
-                .filter(c => c.phone === formData.customerInfo.phone)
-                .map(customer => (
+      {formData.customerInfo.relatedCustomer && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <Label className="text-base font-semibold flex items-center gap-2">
+            <Users size={20} className="text-blue-600" />
+            Người thân liên quan
+          </Label>
+          <p className="text-sm text-gray-600 mt-1 mb-3">
+            Đã liên kết với: <strong>
+              {customers.find(c => c.id === formData.customerInfo.relatedCustomer)?.name || 'N/A'}
+            </strong>
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="relatedCustomer">Khách hàng liên quan</Label>
+              <select
+                id="relatedCustomer"
+                value={formData.customerInfo.relatedCustomer || ''}
+                onChange={(e) => handleInputChange('customerInfo', 'relatedCustomer', e.target.value || null)}
+                className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">-- Bỏ liên kết --</option>
+                {matchedCustomers.map(customer => (
                   <option key={customer.id} value={customer.id}>
                     {customer.name} - {customer.phone}
                   </option>
                 ))}
-            </select>
-            <p className="text-xs text-gray-500 mt-1">Chỉ hiển thị khách có cùng SĐT</p>
-          </div>
-          <div>
-            <Label htmlFor="relationship">Mối quan hệ</Label>
-            <select
-              id="relationship"
-              value={formData.customerInfo.relationship}
-              onChange={(e) => handleInputChange('customerInfo', 'relationship', e.target.value)}
-              disabled={!formData.customerInfo.relatedCustomer}
-              className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
-            >
-              <option value="">Chọn mối quan hệ</option>
-              <option value="mother">Mẹ</option>
-              <option value="father">Bố</option>
-              <option value="daughter">Con gái</option>
-              <option value="son">Con trai</option>
-              <option value="wife">Vợ</option>
-              <option value="husband">Chồng</option>
-              <option value="sister">Chị/Em gái</option>
-              <option value="brother">Anh/Em trai</option>
-              <option value="friend">Bạn</option>
-              <option value="other">Khác</option>
-            </select>
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="relationship">Mối quan hệ *</Label>
+              <select
+                id="relationship"
+                value={formData.customerInfo.relationship}
+                onChange={(e) => handleInputChange('customerInfo', 'relationship', e.target.value)}
+                className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Chọn mối quan hệ</option>
+                <option value="mother">Mẹ</option>
+                <option value="father">Bố</option>
+                <option value="daughter">Con gái</option>
+                <option value="son">Con trai</option>
+                <option value="wife">Vợ</option>
+                <option value="husband">Chồng</option>
+                <option value="sister">Chị/Em gái</option>
+                <option value="brother">Anh/Em trai</option>
+                <option value="friend">Bạn</option>
+                <option value="other">Khác</option>
+              </select>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div>
         <Label className="text-base font-semibold">Tóc của anh/chị đã từng trải qua các dịch vụ nào?</Label>

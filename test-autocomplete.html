@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thêm khách hàng mẫu - Test Autocomplete</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #8B1538;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #8B1538;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #6B0F28;
+        }
+        .success {
+            background: #10B981;
+            padding: 15px;
+            border-radius: 5px;
+            color: white;
+            margin-top: 20px;
+            display: none;
+        }
+        .customer-list {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        .customer-item {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .customer-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Autocomplete - Thêm khách hàng mẫu</h1>
+        <p>Click nút dưới để thêm 10 khách hàng mẫu vào localStorage để test tính năng autocomplete.</p>
+        
+        <button onclick="addSampleCustomers()">➕ Thêm 10 khách hàng mẫu</button>
+        <button onclick="viewCustomers()">👁️ Xem danh sách khách</button>
+        <button onclick="clearCustomers()">🗑️ Xóa tất cả</button>
+        
+        <div class="success" id="success">✅ Đã thêm thành công!</div>
+        
+        <div class="customer-list" id="customerList" style="display:none;">
+            <h3>Danh sách khách hàng hiện có:</h3>
+            <div id="customerContent"></div>
+        </div>
+    </div>
+
+    <script>
+        const sampleCustomers = [
+            {
+                id: '1' + Date.now(),
+                name: 'Huỳnh Chí Tâm',
+                phone: '0908182440',
+                email: 'chitam@gmail.com',
+                birthday: '1990-05-15',
+                gender: 'male',
+                lastVisit: '2025-09-20',
+                totalVisits: 5,
+                status: 'active'
+            },
+            {
+                id: '2' + Date.now(),
+                name: 'Nguyễn Văn Tâm',
+                phone: '0908123456',
+                email: 'vantam@gmail.com',
+                birthday: '1985-08-20',
+                gender: 'male',
+                lastVisit: '2025-09-15',
+                totalVisits: 3,
+                status: 'active'
+            },
+            {
+                id: '3' + Date.now(),
+                name: 'Trần Thị Tâm',
+                phone: '0908654321',
+                email: 'thitam@gmail.com',
+                birthday: '1992-03-10',
+                gender: 'female',
+                lastVisit: '2025-09-18',
+                totalVisits: 7,
+                status: 'active'
+            },
+            {
+                id: '4' + Date.now(),
+                name: 'Lê Minh Tâm',
+                phone: '0908999888',
+                email: 'minhtam@gmail.com',
+                birthday: '1988-12-25',
+                gender: 'male',
+                lastVisit: '2025-09-10',
+                totalVisits: 2,
+                status: 'active'
+            },
+            {
+                id: '5' + Date.now(),
+                name: 'Phạm Thúy Hằng',
+                phone: '0909111222',
+                email: 'thuyhang@gmail.com',
+                birthday: '1995-07-08',
+                gender: 'female',
+                lastVisit: '2025-09-22',
+                totalVisits: 4,
+                status: 'active'
+            },
+            {
+                id: '6' + Date.now(),
+                name: 'Võ Văn Long',
+                phone: '0909333444',
+                email: 'vanlong@gmail.com',
+                birthday: '1987-11-30',
+                gender: 'male',
+                lastVisit: '2025-09-12',
+                totalVisits: 6,
+                status: 'active'
+            },
+            {
+                id: '7' + Date.now(),
+                name: 'Đặng Thị Mai',
+                phone: '0909555666',
+                email: 'thimai@gmail.com',
+                birthday: '1993-04-17',
+                gender: 'female',
+                lastVisit: '2025-09-25',
+                totalVisits: 8,
+                status: 'active'
+            },
+            {
+                id: '8' + Date.now(),
+                name: 'Hoàng Văn Nam',
+                phone: '0909777888',
+                email: 'vannam@gmail.com',
+                birthday: '1991-09-05',
+                gender: 'male',
+                lastVisit: '2025-09-14',
+                totalVisits: 1,
+                status: 'active'
+            },
+            {
+                id: '9' + Date.now(),
+                name: 'Bùi Thị Lan',
+                phone: '0909999000',
+                email: 'thilan@gmail.com',
+                birthday: '1994-06-22',
+                gender: 'female',
+                lastVisit: '2025-09-19',
+                totalVisits: 5,
+                status: 'active'
+            },
+            {
+                id: '10' + Date.now(),
+                name: 'Phan Văn Hùng',
+                phone: '0910111222',
+                email: 'vanhung@gmail.com',
+                birthday: '1989-02-14',
+                gender: 'male',
+                lastVisit: '2025-09-11',
+                totalVisits: 3,
+                status: 'active'
+            }
+        ];
+
+        function addSampleCustomers() {
+            // Lấy danh sách khách hàng hiện có
+            const existingCustomers = JSON.parse(localStorage.getItem('customers') || '[]');
+            
+            // Thêm khách hàng mẫu
+            const updatedCustomers = [...existingCustomers, ...sampleCustomers];
+            
+            // Lưu vào localStorage
+            localStorage.setItem('customers', JSON.stringify(updatedCustomers));
+            
+            // Hiển thị thông báo
+            document.getElementById('success').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('success').style.display = 'none';
+            }, 3000);
+            
+            console.log('✅ Đã thêm 10 khách hàng mẫu!');
+            console.log('📊 Tổng số khách hàng:', updatedCustomers.length);
+        }
+
+        function viewCustomers() {
+            const customers = JSON.parse(localStorage.getItem('customers') || '[]');
+            const listDiv = document.getElementById('customerList');
+            const contentDiv = document.getElementById('customerContent');
+            
+            if (customers.length === 0) {
+                contentDiv.innerHTML = '<p>Chưa có khách hàng nào. Hãy thêm khách hàng mẫu!</p>';
+            } else {
+                contentDiv.innerHTML = customers.map((c, i) => `
+                    <div class="customer-item">
+                        <strong>${i + 1}. ${c.name}</strong><br>
+                        📞 ${c.phone} | ✉️ ${c.email}<br>
+                        <small>Lần cuối: ${c.lastVisit || 'N/A'}</small>
+                    </div>
+                `).join('');
+            }
+            
+            listDiv.style.display = 'block';
+        }
+
+        function clearCustomers() {
+            if (confirm('Bạn có chắc muốn xóa TẤT CẢ khách hàng?')) {
+                localStorage.removeItem('customers');
+                alert('✅ Đã xóa tất cả khách hàng!');
+                document.getElementById('customerList').style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
+

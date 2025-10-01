@@ -10,27 +10,43 @@ import ReminderSystem from './components/ReminderSystem';
 import CustomerManagement from './components/CustomerManagement';
 import AppointmentManagement from './components/AppointmentManagement';
 import ReportsAnalytics from './components/ReportsAnalytics';
-import Login from './components/Login';
-import SystemManagement from './components/SystemManagement';
-import Profile from './components/Profile';
-import UserManagement from './components/UserManagement';
 import './App.css';
 
 function App() {
   const [activeSection, setActiveSection] = useState('home');
-  const [user, setUser] = useState(null);
-
-  const handleLogout = () => {
-    setUser(null);
-    setActiveSection('home');
-  };
 
   const renderContent = () => {
     switch (activeSection) {
       case 'home':
         return <HomePage setActiveSection={setActiveSection} />;
+      case 'quiz':
+        return <HairQuiz onComplete={(analysis) => {
+          // Lưu kết quả phân tích và chuyển đến trang tư vấn
+          localStorage.setItem('quizAnalysis', JSON.stringify(analysis));
+          setActiveSection('consultation');
+        }} />;
       case 'consultation':
         return <ConsultationForm />;
+      case 'passport':
+        return <HairPassportSimple 
+          customerInfo={{
+            name: 'Khách hàng mẫu',
+            phone: '0123456789',
+            email: 'customer@example.com',
+            visitDate: new Date().toLocaleDateString('vi-VN')
+          }}
+          quizResults={JSON.parse(localStorage.getItem('quizAnalysis') || 'null')}
+          professionalTests={JSON.parse(localStorage.getItem('professionalTests') || 'null')}
+          beforePhoto={localStorage.getItem('beforePhoto')}
+          onSave={(passportData) => {
+            localStorage.setItem('hairPassport', JSON.stringify(passportData));
+            alert('Hair Passport đã được lưu thành công!');
+          }}
+          onScheduleFollowUp={(appointmentData) => {
+            console.log('Đặt lịch hẹn:', appointmentData);
+            setActiveSection('appointments');
+          }}
+        />;
       case 'customers':
         return <CustomerManagement />;
       case 'products':
@@ -41,12 +57,6 @@ function App() {
         return <AppointmentManagement />;
       case 'reports':
         return <ReportsAnalytics />;
-      case 'system':
-        return <SystemManagement />;
-      case 'profile':
-        return <Profile user={user || { email: 'admin@chitam.salon', displayName: 'Admin' }} />;
-      case 'users':
-        return <UserManagement currentUser={user || { email: 'admin@chitam.salon', displayName: 'Admin' }} />;
       default:
         return <HomePage setActiveSection={setActiveSection} />;
     }
@@ -54,20 +64,14 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header setActiveSection={setActiveSection} />
-      <Navigation 
-        activeSection={activeSection} 
-        setActiveSection={setActiveSection}
-        user={user || { email: 'admin@chitam.salon', displayName: 'Admin' }}
-        onLogout={handleLogout}
-      />
+      <Header />
+      <Navigation activeSection={activeSection} setActiveSection={setActiveSection} />
       <main className="container mx-auto px-4 py-8">
         {renderContent()}
       </main>
       <footer className="bg-burgundy-500 text-white text-center py-6 mt-12">
         <p>&copy; 2025 Chí Tâm Hair Salon. Tất cả quyền được bảo lưu.</p>
-        <p className="text-sm opacity-80 mt-2">14-16-18 Lê Thị Riêng, P.Bến Thành, TP.HCM | Hotline: 0938 987 733</p>
-        <p className="text-sm opacity-80 mt-1">Powered by JOICO DEFY DAMAGE Technology</p>
+        <p className="text-sm opacity-80 mt-2">Powered by JOICO DEFY DAMAGE Technology</p>
       </footer>
     </div>
   );

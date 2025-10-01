@@ -28,6 +28,9 @@ const CustomerManagement = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
+  const [showMergeDialog, setShowMergeDialog] = useState(false);
+  const [duplicateCustomers, setDuplicateCustomers] = useState([]);
+  const [selectedCustomerToMerge, setSelectedCustomerToMerge] = useState(null);
   const [newCustomer, setNewCustomer] = useState({
     name: '',
     phone: '',
@@ -127,10 +130,45 @@ const CustomerManagement = () => {
     customer.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Check for duplicate customers
+  const checkDuplicateCustomer = (customerData) => {
+    const duplicates = customers.filter(existingCustomer => {
+      // Check by phone number (primary)
+      if (existingCustomer.phone === customerData.phone) {
+        return true;
+      }
+      
+      // Check by email if provided
+      if (customerData.email && existingCustomer.email === customerData.email) {
+        return true;
+      }
+      
+      // Check by name + birthday if both provided
+      if (customerData.name && customerData.birthday && 
+          existingCustomer.name === customerData.name && 
+          existingCustomer.birthday === customerData.birthday) {
+        return true;
+      }
+      
+      return false;
+    });
+    
+    return duplicates;
+  };
+
   // Handle adding new customer
   const handleAddCustomer = async () => {
     if (!newCustomer.name || !newCustomer.phone) {
       alert('Vui lòng nhập tên và số điện thoại!');
+      return;
+    }
+
+    // Check for duplicates
+    const duplicates = checkDuplicateCustomer(newCustomer);
+    if (duplicates.length > 0) {
+      setDuplicateCustomers(duplicates);
+      setSelectedCustomerToMerge(newCustomer);
+      setShowMergeDialog(true);
       return;
     }
 
@@ -184,6 +222,45 @@ const CustomerManagement = () => {
   const handleEditCustomer = (customer) => {
     setEditingCustomer({ ...customer });
     setShowEditForm(true);
+  };
+
+  // Handle merging customers
+  const handleMergeCustomers = async (existingCustomer, newCustomerData) => {
+    try {
+      const mergedCustomer = {
+        ...existingCustomer,
+        // Keep existing data but update with new information
+        name: newCustomerData.name || existingCustomer.name,
+        email: newCustomerData.email || existingCustomer.email,
+        birthday: newCustomerData.birthday || existingCustomer.birthday,
+        gender: newCustomerData.gender || existingCustomer.gender,
+        hairCondition: newCustomerData.hairCondition || existingCustomer.hairCondition,
+        treatments: [...new Set([...existingCustomer.treatments, ...newCustomerData.treatments])],
+        notes: existingCustomer.notes + (newCustomerData.notes ? `\n${newCustomerData.notes}` : ''),
+        lastVisit: new Date().toISOString().split('T')[0],
+        totalVisits: existingCustomer.totalVisits + 1
+      };
+
+      await customerService.update(existingCustomer.id, mergedCustomer);
+      
+      // Reset form
+      setNewCustomer({
+        name: '',
+        phone: '',
+        email: '',
+        birthday: '',
+        gender: '',
+        hairCondition: '',
+        treatments: [],
+        notes: ''
+      });
+      setShowAddForm(false);
+      setShowMergeDialog(false);
+      alert('Đã gộp thông tin khách hàng thành công!');
+    } catch (error) {
+      console.error('Error merging customers:', error);
+      alert('Có lỗi khi gộp thông tin khách hàng. Vui lòng thử lại!');
+    }
   };
 
   // Handle updating customer
@@ -932,6 +1009,106 @@ const CustomerManagement = () => {
 
       {/* Customer Details Modal */}
       <CustomerDetailsModal />
+
+      {/* Merge Customer Dialog */}
+      {showMergeDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4">
+            <CardHeader>
+              <CardTitle className="text-red-600">⚠️ Phát hiện khách hàng trùng lặp</CardTitle>
+              <CardDescription>
+                Hệ thống phát hiện khách hàng có thể đã tồn tại. Bạn có thể gộp thông tin hoặc tạo mới.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold text-gray-700 mb-2">Khách hàng mới:</h4>
+                  <div className="bg-blue-50 p-3 rounded-lg">
+                    <p><strong>Tên:</strong> {selectedCustomerToMerge?.name}</p>
+                    <p><strong>SĐT:</strong> {selectedCustomerToMerge?.phone}</p>
+                    {selectedCustomerToMerge?.email && <p><strong>Email:</strong> {selectedCustomerToMerge.email}</p>}
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-gray-700 mb-2">Khách hàng trùng lặp:</h4>
+                  <div className="space-y-2">
+                    {duplicateCustomers.map((customer, index) => (
+                      <div key={customer.id} className="bg-yellow-50 p-3 rounded-lg border">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <p><strong>Tên:</strong> {customer.name}</p>
+                            <p><strong>SĐT:</strong> {customer.phone}</p>
+                            {customer.email && <p><strong>Email:</strong> {customer.email}</p>}
+                            <p><strong>Lần đến:</strong> {customer.totalVisits}</p>
+                            <p><strong>Lần cuối:</strong> {customer.lastVisit}</p>
+                          </div>
+                          <Button
+                            onClick={() => handleMergeCustomers(customer, selectedCustomerToMerge)}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            Gộp thông tin
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowMergeDialog(false);
+                      setDuplicateCustomers([]);
+                      setSelectedCustomerToMerge(null);
+                    }}
+                  >
+                    Hủy
+                  </Button>
+                  <Button
+                    onClick={async () => {
+                      // Force add new customer
+                      try {
+                        const customerToAdd = {
+                          ...selectedCustomerToMerge,
+                          lastVisit: new Date().toISOString().split('T')[0],
+                          totalVisits: 0,
+                          status: 'active',
+                          nextAppointment: null
+                        };
+
+                        await customerService.add(customerToAdd);
+                        
+                        setNewCustomer({
+                          name: '',
+                          phone: '',
+                          email: '',
+                          birthday: '',
+                          gender: '',
+                          hairCondition: '',
+                          treatments: [],
+                          notes: ''
+                        });
+                        setShowAddForm(false);
+                        setShowMergeDialog(false);
+                        alert('Đã thêm khách hàng mới thành công!');
+                      } catch (error) {
+                        console.error('Error adding customer:', error);
+                        alert('Có lỗi khi thêm khách hàng. Vui lòng thử lại!');
+                      }
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    Tạo mới
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };

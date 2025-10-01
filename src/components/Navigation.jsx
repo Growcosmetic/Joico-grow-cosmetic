@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Home, FileText, Users, Calendar, BarChart3, ChevronDown, Settings, LogOut, User, UserPlus } from 'lucide-react';
+import { Menu, X, Home, FileText, Users, Calendar, BarChart3, ChevronDown, Settings, LogOut, User, UserPlus, Star, Brain, Bell } from 'lucide-react';
 
 const Navigation = ({ activeSection, setActiveSection, user, onLogout }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -26,6 +26,7 @@ const Navigation = ({ activeSection, setActiveSection, user, onLogout }) => {
     { id: 'consultation', label: 'Tư vấn khách hàng', icon: FileText },
     { id: 'customers', label: 'Quản lý khách hàng', icon: Users },
     { id: 'appointments', label: 'Lịch hẹn', icon: Calendar },
+    { id: 'reminders', label: 'Nhắc lịch', icon: Bell },
     { id: 'reports', label: 'Báo cáo', icon: BarChart3 },
   ];
 

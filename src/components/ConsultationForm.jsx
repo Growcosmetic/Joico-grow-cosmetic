@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -6,12 +6,38 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ArrowLeft, ArrowRight, Save, FileText, Mail } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, FileText, Mail, Brain, Star, Camera, Package } from 'lucide-react';
 import { consultationService, customerService } from '../firebase/firestore';
 import emailjs from '@emailjs/browser';
+import HairQuiz from './HairQuiz';
+import HairPassportSimple from './HairPassportSimple';
+import TreatmentPlan from './TreatmentPlan';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const ConsultationForm = () => {
   const [currentStep, setCurrentStep] = useState(1);
+  const [quizResults, setQuizResults] = useState(null);
+  const [professionalTests, setProfessionalTests] = useState(null);
+  const [beforePhoto, setBeforePhoto] = useState(null);
+  const [selectedProducts, setSelectedProducts] = useState([]);
+
+  // Load data from localStorage on component mount
+  useEffect(() => {
+    const savedQuizResults = localStorage.getItem('quizAnalysis');
+    const savedProfessionalTests = localStorage.getItem('professionalTests');
+    const savedBeforePhoto = localStorage.getItem('beforePhoto');
+    
+    if (savedQuizResults) {
+      setQuizResults(JSON.parse(savedQuizResults));
+    }
+    if (savedProfessionalTests) {
+      setProfessionalTests(JSON.parse(savedProfessionalTests));
+    }
+    if (savedBeforePhoto) {
+      setBeforePhoto(savedBeforePhoto);
+    }
+  }, []);
   const [formData, setFormData] = useState({
     // Step 1: Questionnaire
     customerInfo: {
@@ -56,10 +82,12 @@ const ConsultationForm = () => {
   });
 
   const steps = [
-    { id: 1, title: 'Questionnaire', subtitle: 'Hiểu vấn đề của khách hàng' },
-    { id: 2, title: 'Hair Diagnosis', subtitle: 'Chẩn đoán' },
-    { id: 3, title: 'Salon Treatment', subtitle: 'Phương pháp điều trị' },
-    { id: 4, title: 'Hair Passport', subtitle: 'Hộ chiếu tóc' }
+    { id: 1, title: 'Thông tin khách hàng', subtitle: 'Thu thập thông tin cơ bản', icon: FileText },
+    { id: 2, title: 'Quiz chẩn đoán', subtitle: '6 câu hỏi thông minh', icon: Brain },
+    { id: 3, title: 'Chẩn đoán chuyên nghiệp', subtitle: '4 phép đo chuyên sâu', icon: Camera },
+    { id: 4, title: 'Kế hoạch điều trị', subtitle: 'Chọn sản phẩm Joico', icon: Package },
+    { id: 5, title: 'Tư vấn & Điều trị', subtitle: 'Lập kế hoạch điều trị', icon: FileText },
+    { id: 6, title: 'Hair Passport', subtitle: 'Tổng kết và xuất PDF', icon: Star }
   ];
 
   const previousTreatmentOptions = [
@@ -127,7 +155,7 @@ const ConsultationForm = () => {
   };
 
   const nextStep = () => {
-    if (currentStep < 4) {
+    if (currentStep < 5) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -135,6 +163,52 @@ const ConsultationForm = () => {
   const prevStep = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
+    }
+  };
+
+  // Export PDF function
+  const exportToPDF = async () => {
+    try {
+      const element = document.getElementById('hair-passport-content');
+      if (!element) {
+        alert('Không tìm thấy nội dung để xuất PDF');
+        return;
+      }
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      
+      const imgWidth = 210;
+      const pageHeight = 295;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      const fileName = `Hair_Passport_${formData.customerInfo.name || 'Customer'}_${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
+      
+      alert('PDF đã được xuất thành công!');
+    } catch (error) {
+      console.error('Lỗi xuất PDF:', error);
+      alert('Có lỗi xảy ra khi xuất PDF');
     }
   };
 
@@ -232,7 +306,10 @@ const ConsultationForm = () => {
         id: Date.now().toString(),
         timestamp: new Date().toISOString(),
         customerName: formData.customerInfo.name,
-        customerPhone: formData.customerInfo.phone
+        customerPhone: formData.customerInfo.phone,
+        quizResults: quizResults,
+        professionalTests: professionalTests,
+        beforePhoto: beforePhoto
       };
       
       // Get existing consultations
@@ -250,7 +327,7 @@ const ConsultationForm = () => {
         console.warn('⚠️ Firestore save failed, but localStorage succeeded:', firestoreError);
       }
       
-      // Save customer to localStorage too
+        // Save customer to localStorage too
       const customerData = {
         id: Date.now().toString() + '_customer',
         name: formData.customerInfo.name,
@@ -263,14 +340,53 @@ const ConsultationForm = () => {
         status: 'active',
         hairCondition: formData.customerInfo.currentIssues?.join(', ') || '',
         treatments: formData.customerInfo.previousTreatments || [],
+        selectedProducts: selectedProducts,
         nextAppointment: formData.passport?.nextAppointment || null,
         notes: `Tư vấn ngày ${new Date().toLocaleDateString('vi-VN')}`
       };
       
-      // Save customer to localStorage
+      // Check for duplicate customers before saving
       const existingCustomers = JSON.parse(localStorage.getItem('customers') || '[]');
-      existingCustomers.push(customerData);
-      localStorage.setItem('customers', JSON.stringify(existingCustomers));
+      const duplicates = existingCustomers.filter(existingCustomer => {
+        // Check by phone number (primary)
+        if (existingCustomer.phone === customerData.phone) {
+          return true;
+        }
+        
+        // Check by email if provided
+        if (customerData.email && existingCustomer.email === customerData.email) {
+          return true;
+        }
+        
+        return false;
+      });
+      
+      if (duplicates.length > 0) {
+        // Update existing customer instead of creating new one
+        const existingCustomer = duplicates[0];
+        const updatedCustomer = {
+          ...existingCustomer,
+          lastVisit: customerData.lastVisit,
+          totalVisits: existingCustomer.totalVisits + 1,
+          hairCondition: customerData.hairCondition || existingCustomer.hairCondition,
+          treatments: [...new Set([...existingCustomer.treatments, ...customerData.treatments])],
+          nextAppointment: customerData.nextAppointment || existingCustomer.nextAppointment,
+          notes: existingCustomer.notes + `\nTư vấn ngày ${new Date().toLocaleDateString('vi-VN')}`
+        };
+        
+        // Update in localStorage
+        const updatedCustomers = existingCustomers.map(customer => 
+          customer.id === existingCustomer.id ? updatedCustomer : customer
+        );
+        localStorage.setItem('customers', JSON.stringify(updatedCustomers));
+        
+        console.log('✅ Updated existing customer in localStorage');
+      } else {
+        // Add new customer
+        existingCustomers.push(customerData);
+        localStorage.setItem('customers', JSON.stringify(existingCustomers));
+        console.log('✅ Added new customer to localStorage');
+      }
       
       console.log('✅ Customer saved to localStorage successfully');
 
@@ -1137,34 +1253,105 @@ const ConsultationForm = () => {
     </div>
   );
 
+  // Render step content
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return renderStep1();
+      case 2:
+        return (
+          <HairQuiz 
+            onComplete={(analysis) => {
+              setQuizResults(analysis);
+              setBeforePhoto(analysis.beforePhoto);
+              // Lưu kết quả quiz vào localStorage để đồng bộ
+              localStorage.setItem('quizAnalysis', JSON.stringify(analysis));
+              nextStep();
+            }} 
+          />
+        );
+      case 3:
+        return renderStep2();
+      case 4:
+        return (
+          <TreatmentPlan 
+            onSave={(products) => {
+              setSelectedProducts(products);
+              nextStep();
+            }}
+            initialSelectedProducts={selectedProducts}
+          />
+        );
+      case 5:
+        return renderStep3();
+      case 6:
+        return (
+          <div>
+            <HairPassportSimple 
+              customerInfo={formData.customerInfo}
+              quizResults={quizResults || JSON.parse(localStorage.getItem('quizAnalysis') || 'null')}
+              professionalTests={professionalTests || JSON.parse(localStorage.getItem('professionalTests') || 'null')}
+              beforePhoto={beforePhoto || localStorage.getItem('beforePhoto')}
+              onSave={(passportData) => {
+                setFormData(prev => ({
+                  ...prev,
+                  passport: passportData
+                }));
+                // Lưu passport data vào localStorage
+                localStorage.setItem('hairPassport', JSON.stringify(passportData));
+              }}
+              onScheduleFollowUp={(appointmentData) => {
+                console.log('Đặt lịch hẹn:', appointmentData);
+                // Lưu appointment data
+                localStorage.setItem('nextAppointment', JSON.stringify(appointmentData));
+              }}
+            />
+            <div className="mt-6 flex justify-center gap-4">
+              <Button
+                onClick={exportToPDF}
+                className="bg-red-500 hover:bg-red-600"
+              >
+                <FileText size={16} className="mr-2" />
+                Xuất PDF
+              </Button>
+            </div>
+          </div>
+        );
+      default:
+        return renderStep1();
+    }
+  };
 
   return (
     <div className="max-w-6xl mx-auto">
       {/* Progress Steps */}
       <div className="mb-8">
         <div className="flex justify-between items-center">
-          {steps.map((step, index) => (
-            <div key={step.id} className="flex items-center">
-              <div className={`flex flex-col items-center ${index < steps.length - 1 ? 'flex-1' : ''}`}>
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold ${
-                  currentStep >= step.id 
-                    ? 'bg-burgundy-500 text-white' 
-                    : 'bg-gray-200 text-gray-600'
-                }`}>
-                  {step.id}
+          {steps.map((step, index) => {
+            const Icon = step.icon;
+            return (
+              <div key={step.id} className="flex items-center">
+                <div className={`flex flex-col items-center ${index < steps.length - 1 ? 'flex-1' : ''}`}>
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold ${
+                    currentStep >= step.id 
+                      ? 'bg-burgundy-500 text-white' 
+                      : 'bg-gray-200 text-gray-600'
+                  }`}>
+                    {Icon ? <Icon size={16} /> : step.id}
+                  </div>
+                  <div className="text-center mt-2">
+                    <div className="text-sm font-semibold">{step.title}</div>
+                    <div className="text-xs text-gray-600">{step.subtitle}</div>
+                  </div>
                 </div>
-                <div className="text-center mt-2">
-                  <div className="text-sm font-semibold">{step.title}</div>
-                  <div className="text-xs text-gray-600">{step.subtitle}</div>
-                </div>
+                {index < steps.length - 1 && (
+                  <div className={`flex-1 h-1 mx-4 ${
+                    currentStep > step.id ? 'bg-burgundy-500' : 'bg-gray-200'
+                  }`} />
+                )}
               </div>
-              {index < steps.length - 1 && (
-                <div className={`flex-1 h-1 mx-4 ${
-                  currentStep > step.id ? 'bg-burgundy-500' : 'bg-gray-200'
-                }`} />
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -1179,10 +1366,7 @@ const ConsultationForm = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="p-6">
-          {currentStep === 1 && renderStep1()}
-          {currentStep === 2 && renderStep2()}
-          {currentStep === 3 && renderStep3()}
-          {currentStep === 4 && renderStep4()}
+          {renderStepContent()}
         </CardContent>
       </Card>
 
@@ -1199,7 +1383,7 @@ const ConsultationForm = () => {
         </Button>
 
         <div className="flex gap-4">
-          {currentStep < 4 && (
+          {currentStep < 5 && (
             <Button
               variant="outline"
               onClick={saveForm}
@@ -1210,7 +1394,7 @@ const ConsultationForm = () => {
             </Button>
           )}
 
-          {currentStep < 4 ? (
+          {currentStep < 5 ? (
             <Button
               onClick={nextStep}
               className="bg-burgundy-500 hover:bg-burgundy-600"

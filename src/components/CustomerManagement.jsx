@@ -35,6 +35,8 @@ const CustomerManagement = () => {
   const [showMergeDialog, setShowMergeDialog] = useState(false);
   const [duplicateCustomers, setDuplicateCustomers] = useState([]);
   const [selectedCustomerToMerge, setSelectedCustomerToMerge] = useState(null);
+  const [selectedCustomerIds, setSelectedCustomerIds] = useState([]); // Danh sách ID khách hàng được chọn
+  const [isSelectMode, setIsSelectMode] = useState(false); // Chế độ chọn nhiều
   const [newCustomer, setNewCustomer] = useState({
     name: '',
     phone: '',
@@ -300,6 +302,73 @@ const CustomerManagement = () => {
         alert('Có lỗi khi xóa khách hàng. Vui lòng thử lại!');
       }
     }
+  };
+
+  // Toggle select customer
+  const toggleSelectCustomer = (customerId) => {
+    setSelectedCustomerIds(prev => {
+      if (prev.includes(customerId)) {
+        return prev.filter(id => id !== customerId);
+      } else {
+        return [...prev, customerId];
+      }
+    });
+  };
+
+  // Select all customers
+  const handleSelectAll = () => {
+    if (selectedCustomerIds.length === filteredCustomers.length) {
+      setSelectedCustomerIds([]);
+    } else {
+      setSelectedCustomerIds(filteredCustomers.map(c => c.id));
+    }
+  };
+
+  // Delete multiple customers
+  const handleDeleteMultiple = async () => {
+    if (selectedCustomerIds.length === 0) {
+      alert('Vui lòng chọn ít nhất một khách hàng để xóa!');
+      return;
+    }
+
+    const confirmDelete = window.confirm(
+      `Bạn có chắc chắn muốn xóa ${selectedCustomerIds.length} khách hàng đã chọn?\n\nHành động này không thể hoàn tác!`
+    );
+
+    if (confirmDelete) {
+      try {
+        let successCount = 0;
+        let errorCount = 0;
+
+        for (const customerId of selectedCustomerIds) {
+          try {
+            await customerService.delete(customerId);
+            successCount++;
+          } catch (error) {
+            console.error('Error deleting customer:', customerId, error);
+            errorCount++;
+          }
+        }
+
+        if (errorCount === 0) {
+          alert(`Đã xóa thành công ${successCount} khách hàng!`);
+        } else {
+          alert(`Đã xóa ${successCount} khách hàng.\nCó ${errorCount} khách hàng bị lỗi.`);
+        }
+
+        setSelectedCustomerIds([]);
+        setIsSelectMode(false);
+      } catch (error) {
+        console.error('Error in bulk delete:', error);
+        alert('Có lỗi khi xóa khách hàng. Vui lòng thử lại!');
+      }
+    }
+  };
+
+  // Cancel select mode
+  const handleCancelSelectMode = () => {
+    setIsSelectMode(false);
+    setSelectedCustomerIds([]);
   };
 
   const getStatusBadge = (status) => {
@@ -610,31 +679,73 @@ const CustomerManagement = () => {
         <div>
           <h2 className="text-2xl font-bold text-burgundy-700">Quản lý khách hàng</h2>
           <p className="text-gray-600">Theo dõi và quản lý thông tin khách hàng</p>
+          {isSelectMode && selectedCustomerIds.length > 0 && (
+            <p className="text-sm text-blue-600 mt-1">
+              Đã chọn {selectedCustomerIds.length} khách hàng
+            </p>
+          )}
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button 
-            variant="outline" 
-            onClick={exportToExcel}
-            className="border-burgundy-500 text-burgundy-500 hover:bg-burgundy-50"
-          >
-            <Download size={16} className="mr-2" />
-            Xuất Excel
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => fileInputRef.current?.click()}
-            className="border-green-500 text-green-500 hover:bg-green-50"
-          >
-            <Upload size={16} className="mr-2" />
-            Nhập Excel
-          </Button>
-          <Button 
-            className="bg-burgundy-500 hover:bg-burgundy-600"
-            onClick={() => setShowAddForm(true)}
-          >
-            <Plus size={16} className="mr-2" />
-            Thêm khách hàng
-          </Button>
+          {!isSelectMode ? (
+            <>
+              <Button 
+                variant="outline" 
+                onClick={exportToExcel}
+                className="border-burgundy-500 text-burgundy-500 hover:bg-burgundy-50"
+              >
+                <Download size={16} className="mr-2" />
+                Xuất Excel
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => fileInputRef.current?.click()}
+                className="border-green-500 text-green-500 hover:bg-green-50"
+              >
+                <Upload size={16} className="mr-2" />
+                Nhập Excel
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => setIsSelectMode(true)}
+                className="border-red-500 text-red-500 hover:bg-red-50"
+              >
+                <Trash2 size={16} className="mr-2" />
+                Xóa nhiều
+              </Button>
+              <Button 
+                className="bg-burgundy-500 hover:bg-burgundy-600"
+                onClick={() => setShowAddForm(true)}
+              >
+                <Plus size={16} className="mr-2" />
+                Thêm khách hàng
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button 
+                variant="outline"
+                onClick={handleCancelSelectMode}
+                className="border-gray-500 text-gray-700 hover:bg-gray-50"
+              >
+                Hủy
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={handleSelectAll}
+                className="border-blue-500 text-blue-600 hover:bg-blue-50"
+              >
+                {selectedCustomerIds.length === filteredCustomers.length ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
+              </Button>
+              <Button 
+                onClick={handleDeleteMultiple}
+                disabled={selectedCustomerIds.length === 0}
+                className="bg-red-500 hover:bg-red-600 disabled:bg-gray-300"
+              >
+                <Trash2 size={16} className="mr-2" />
+                Xóa đã chọn ({selectedCustomerIds.length})
+              </Button>
+            </>
+          )}
           <input
             ref={fileInputRef}
             type="file"
@@ -707,9 +818,22 @@ const CustomerManagement = () => {
             {filteredCustomers.map((customer) => (
               <div
                 key={customer.id}
-                className="border border-gray-200 rounded-lg p-4 hover:border-burgundy-300 transition-colors"
+                className={`border border-gray-200 rounded-lg p-4 hover:border-burgundy-300 transition-colors ${
+                  isSelectMode && selectedCustomerIds.includes(customer.id) ? 'bg-blue-50 border-blue-400' : ''
+                }`}
               >
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  {/* Checkbox khi ở chế độ chọn nhiều */}
+                  {isSelectMode && (
+                    <div className="flex items-start pt-1">
+                      <Checkbox
+                        checked={selectedCustomerIds.includes(customer.id)}
+                        onCheckedChange={() => toggleSelectCustomer(customer.id)}
+                        className="mt-1"
+                      />
+                    </div>
+                  )}
+                  
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="font-semibold text-lg">{customer.name}</h3>
@@ -768,35 +892,38 @@ const CustomerManagement = () => {
                     )}
                   </div>
 
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => viewCustomerDetails(customer)}
-                      className="border-burgundy-500 text-burgundy-500 hover:bg-burgundy-50"
-                    >
-                      <Eye size={16} className="mr-1" />
-                      Xem
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEditCustomer(customer)}
-                      className="border-blue-500 text-blue-500 hover:bg-blue-50"
-                    >
-                      <Edit size={16} className="mr-1" />
-                      Sửa
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDeleteCustomer(customer)}
-                      className="border-red-500 text-red-500 hover:bg-red-50"
-                    >
-                      <Trash2 size={16} className="mr-1" />
-                      Xóa
-                    </Button>
-                  </div>
+                  {/* Chỉ hiển thị nút hành động khi không ở chế độ chọn nhiều */}
+                  {!isSelectMode && (
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => viewCustomerDetails(customer)}
+                        className="border-burgundy-500 text-burgundy-500 hover:bg-burgundy-50"
+                      >
+                        <Eye size={16} className="mr-1" />
+                        Xem
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEditCustomer(customer)}
+                        className="border-blue-500 text-blue-500 hover:bg-blue-50"
+                      >
+                        <Edit size={16} className="mr-1" />
+                        Sửa
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteCustomer(customer)}
+                        className="border-red-500 text-red-500 hover:bg-red-50"
+                      >
+                        <Trash2 size={16} className="mr-1" />
+                        Xóa
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

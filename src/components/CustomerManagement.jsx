@@ -52,6 +52,15 @@ const CustomerManagement = () => {
   });
   const fileInputRef = useRef(null);
 
+  // Debug function để kiểm tra localStorage
+  const debugLocalStorage = () => {
+    const localCustomers = JSON.parse(localStorage.getItem('customers') || '[]');
+    console.log('🔍 DEBUG localStorage:', {
+      count: localCustomers.length,
+      customers: localCustomers.map(c => ({ id: c.id, name: c.name }))
+    });
+  };
+
   // Load customers from localStorage first, then Firestore
   useEffect(() => {
     const loadCustomers = async () => {
@@ -63,6 +72,7 @@ const CustomerManagement = () => {
         if (localCustomers.length > 0) {
           setCustomers(localCustomers);
           console.log('✅ Using localStorage data');
+          debugLocalStorage();
           return;
         }
         
@@ -139,16 +149,19 @@ const CustomerManagement = () => {
 
     loadCustomers();
 
-    // Setup real-time listener (chỉ sync từ Firestore, không ghi đè localStorage)
-    const unsubscribe = customerService.onSnapshot((customersData) => {
-      // Chỉ cập nhật nếu localStorage trống
-      const localCustomers = JSON.parse(localStorage.getItem('customers') || '[]');
-      if (localCustomers.length === 0) {
-        setCustomers(customersData);
-        localStorage.setItem('customers', JSON.stringify(customersData));
-        console.log('🔄 Synced from Firestore to localStorage');
-      }
-    });
+    // Tạm thời tắt real-time listener để tránh ghi đè localStorage
+    // const unsubscribe = customerService.onSnapshot((customersData) => {
+    //   // Chỉ cập nhật nếu localStorage trống
+    //   const localCustomers = JSON.parse(localStorage.getItem('customers') || '[]');
+    //   if (localCustomers.length === 0) {
+    //     setCustomers(customersData);
+    //     localStorage.setItem('customers', JSON.stringify(customersData));
+    //     console.log('🔄 Synced from Firestore to localStorage');
+    //   }
+    // });
+    
+    // Return empty function thay vì unsubscribe
+    const unsubscribe = () => {};
 
     // Cleanup listener on component unmount
     return () => unsubscribe();
@@ -337,6 +350,7 @@ const CustomerManagement = () => {
         setTimeout(() => {
           const savedCustomers = JSON.parse(localStorage.getItem('customers') || '[]');
           setCustomers(savedCustomers);
+          console.log('🔄 Force reloaded from localStorage:', savedCustomers.length, 'customers');
         }, 100);
         
         // Thử xóa từ Firestore (không bắt buộc)
@@ -401,6 +415,7 @@ const CustomerManagement = () => {
         setTimeout(() => {
           const savedCustomers = JSON.parse(localStorage.getItem('customers') || '[]');
           setCustomers(savedCustomers);
+          console.log('🔄 Force reloaded from localStorage:', savedCustomers.length, 'customers');
         }, 100);
         
         // Thử xóa từ Firestore (không bắt buộc)

@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ArrowLeft, ArrowRight, Save, FileText, Mail, Brain, Star, Camera, Package } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, FileText, Mail, Brain, Star, Camera, Package, Users } from 'lucide-react';
 import { consultationService, customerService } from '../firebase/firestore';
 import emailjs from '@emailjs/browser';
 import HairQuiz from './HairQuiz';
@@ -21,6 +21,7 @@ const ConsultationForm = () => {
   const [professionalTests, setProfessionalTests] = useState(null);
   const [beforePhoto, setBeforePhoto] = useState(null);
   const [selectedProducts, setSelectedProducts] = useState([]);
+  const [customers, setCustomers] = useState([]); // Danh sách khách hàng
 
   // Load data from localStorage on component mount
   useEffect(() => {
@@ -36,6 +37,12 @@ const ConsultationForm = () => {
     }
     if (savedBeforePhoto) {
       setBeforePhoto(savedBeforePhoto);
+    }
+
+    // Load customers từ localStorage
+    const savedCustomers = localStorage.getItem('customers');
+    if (savedCustomers) {
+      setCustomers(JSON.parse(savedCustomers));
     }
   }, []);
   const [formData, setFormData] = useState({
@@ -54,7 +61,9 @@ const ConsultationForm = () => {
         today: '',
         twoWeeks: '',
         oneMonth: ''
-      }
+      },
+      relatedCustomer: null, // ID khách hàng liên quan
+      relationship: '' // Mối quan hệ
     },
     // Step 2: Hair Diagnosis
     diagnosis: {
@@ -684,6 +693,60 @@ const ConsultationForm = () => {
               })}
               placeholder="Mong muốn sau 1 tháng..."
             />
+          </div>
+        </div>
+      </div>
+
+      {/* Người thân liên quan */}
+      <div className="border-t pt-6">
+        <Label className="text-base font-semibold flex items-center gap-2">
+          <Users size={20} className="text-burgundy-600" />
+          Người thân liên quan (nếu có)
+        </Label>
+        <p className="text-sm text-gray-500 mt-1 mb-3">
+          Liên kết với khách hàng khác nếu họ là người thân dùng chung số điện thoại
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="relatedCustomer">Chọn khách hàng</Label>
+            <select
+              id="relatedCustomer"
+              value={formData.customerInfo.relatedCustomer || ''}
+              onChange={(e) => handleInputChange('customerInfo', 'relatedCustomer', e.target.value || null)}
+              className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
+            >
+              <option value="">-- Không có --</option>
+              {customers
+                .filter(c => c.phone === formData.customerInfo.phone)
+                .map(customer => (
+                  <option key={customer.id} value={customer.id}>
+                    {customer.name} - {customer.phone}
+                  </option>
+                ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">Chỉ hiển thị khách có cùng SĐT</p>
+          </div>
+          <div>
+            <Label htmlFor="relationship">Mối quan hệ</Label>
+            <select
+              id="relationship"
+              value={formData.customerInfo.relationship}
+              onChange={(e) => handleInputChange('customerInfo', 'relationship', e.target.value)}
+              disabled={!formData.customerInfo.relatedCustomer}
+              className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent disabled:bg-gray-100"
+            >
+              <option value="">Chọn mối quan hệ</option>
+              <option value="mother">Mẹ</option>
+              <option value="father">Bố</option>
+              <option value="daughter">Con gái</option>
+              <option value="son">Con trai</option>
+              <option value="wife">Vợ</option>
+              <option value="husband">Chồng</option>
+              <option value="sister">Chị/Em gái</option>
+              <option value="brother">Anh/Em trai</option>
+              <option value="friend">Bạn</option>
+              <option value="other">Khác</option>
+            </select>
           </div>
         </div>
       </div>

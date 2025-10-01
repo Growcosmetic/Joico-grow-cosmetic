@@ -304,8 +304,18 @@ const CustomerManagement = () => {
       try {
         // Xóa từ localStorage trước
         const updatedCustomers = customers.filter(c => c.id !== customer.id);
+        console.log('🗑️ Deleting customer:', customer.name, 'ID:', customer.id);
+        console.log('📊 Before delete:', customers.length, 'customers');
+        console.log('📊 After delete:', updatedCustomers.length, 'customers');
+        
         setCustomers(updatedCustomers);
         localStorage.setItem('customers', JSON.stringify(updatedCustomers));
+        
+        // Force re-render by updating state
+        setTimeout(() => {
+          const savedCustomers = JSON.parse(localStorage.getItem('customers') || '[]');
+          setCustomers(savedCustomers);
+        }, 100);
         
         // Thử xóa từ Firestore (không bắt buộc)
         try {
@@ -358,8 +368,18 @@ const CustomerManagement = () => {
       try {
         // Xóa từ localStorage trước
         const updatedCustomers = customers.filter(c => !selectedCustomerIds.includes(c.id));
+        console.log('🗑️ Deleting multiple customers:', selectedCustomerIds.length);
+        console.log('📊 Before delete:', customers.length, 'customers');
+        console.log('📊 After delete:', updatedCustomers.length, 'customers');
+        
         setCustomers(updatedCustomers);
         localStorage.setItem('customers', JSON.stringify(updatedCustomers));
+        
+        // Force re-render by updating state
+        setTimeout(() => {
+          const savedCustomers = JSON.parse(localStorage.getItem('customers') || '[]');
+          setCustomers(savedCustomers);
+        }, 100);
         
         // Thử xóa từ Firestore (không bắt buộc)
         let firestoreSuccessCount = 0;

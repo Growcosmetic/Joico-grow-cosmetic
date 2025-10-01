@@ -302,11 +302,23 @@ const CustomerManagement = () => {
 
     if (confirmDelete) {
       try {
-        await customerService.delete(customer.id);
-        alert('Xóa khách hàng thành công!');
+        // Xóa từ localStorage trước
+        const updatedCustomers = customers.filter(c => c.id !== customer.id);
+        setCustomers(updatedCustomers);
+        localStorage.setItem('customers', JSON.stringify(updatedCustomers));
+        
+        // Thử xóa từ Firestore (không bắt buộc)
+        try {
+          await customerService.delete(customer.id);
+          console.log('✅ Đã xóa từ Firestore');
+        } catch (firestoreError) {
+          console.warn('⚠️ Không thể xóa từ Firestore, nhưng đã xóa từ localStorage:', firestoreError);
+        }
+        
+        alert('✅ Xóa khách hàng thành công!');
       } catch (error) {
-        console.error('Error deleting customer:', error);
-        alert('Có lỗi khi xóa khách hàng. Vui lòng thử lại!');
+        console.error('❌ Error deleting customer:', error);
+        alert('❌ Có lỗi khi xóa khách hàng. Vui lòng thử lại!');
       }
     }
   };
@@ -344,30 +356,36 @@ const CustomerManagement = () => {
 
     if (confirmDelete) {
       try {
-        let successCount = 0;
-        let errorCount = 0;
-
+        // Xóa từ localStorage trước
+        const updatedCustomers = customers.filter(c => !selectedCustomerIds.includes(c.id));
+        setCustomers(updatedCustomers);
+        localStorage.setItem('customers', JSON.stringify(updatedCustomers));
+        
+        // Thử xóa từ Firestore (không bắt buộc)
+        let firestoreSuccessCount = 0;
+        let firestoreErrorCount = 0;
+        
         for (const customerId of selectedCustomerIds) {
           try {
             await customerService.delete(customerId);
-            successCount++;
+            firestoreSuccessCount++;
           } catch (error) {
-            console.error('Error deleting customer:', customerId, error);
-            errorCount++;
+            console.warn('⚠️ Không thể xóa từ Firestore:', customerId, error);
+            firestoreErrorCount++;
           }
         }
 
-        if (errorCount === 0) {
-          alert(`Đã xóa thành công ${successCount} khách hàng!`);
+        if (firestoreErrorCount === 0) {
+          alert(`✅ Xóa thành công ${selectedCustomerIds.length} khách hàng!`);
         } else {
-          alert(`Đã xóa ${successCount} khách hàng.\nCó ${errorCount} khách hàng bị lỗi.`);
+          alert(`✅ Xóa thành công ${selectedCustomerIds.length} khách hàng từ localStorage!\n⚠️ ${firestoreErrorCount} khách hàng không thể xóa từ Firestore.`);
         }
 
         setSelectedCustomerIds([]);
         setIsSelectMode(false);
       } catch (error) {
-        console.error('Error in bulk delete:', error);
-        alert('Có lỗi khi xóa khách hàng. Vui lòng thử lại!');
+        console.error('❌ Error in bulk delete:', error);
+        alert('❌ Có lỗi khi xóa khách hàng. Vui lòng thử lại!');
       }
     }
   };

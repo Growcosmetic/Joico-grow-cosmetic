@@ -46,7 +46,9 @@ const CustomerManagement = () => {
     gender: '',
     hairCondition: '',
     treatments: [],
-    notes: '' // Thêm trường ghi chú
+    notes: '', // Thêm trường ghi chú
+    relatedCustomer: null, // ID khách hàng liên quan
+    relationship: '' // Mối quan hệ (Mẹ, Con, Vợ, Chồng...)
   });
   const fileInputRef = useRef(null);
 
@@ -199,7 +201,9 @@ const CustomerManagement = () => {
           gender: '',
           hairCondition: '',
           treatments: [],
-          notes: ''
+          notes: '',
+          relatedCustomer: null,
+          relationship: ''
         });
       setShowAddForm(false);
       alert('Thêm khách hàng thành công!');
@@ -259,7 +263,9 @@ const CustomerManagement = () => {
         gender: '',
         hairCondition: '',
         treatments: [],
-        notes: ''
+        notes: '',
+        relatedCustomer: null,
+        relationship: ''
       });
       setShowAddForm(false);
       setShowMergeDialog(false);
@@ -555,6 +561,44 @@ const CustomerManagement = () => {
                 {selectedCustomer.notes || 'Chưa có ghi chú'}
               </p>
             </div>
+
+            {/* Hiển thị người thân liên quan */}
+            {selectedCustomer.relatedCustomer && (
+              <div>
+                <Label className="font-semibold">👥 Người thân liên quan</Label>
+                <div className="bg-blue-50 p-3 rounded-md border border-blue-200 mt-2">
+                  {(() => {
+                    const relatedCustomer = customers.find(c => c.id === selectedCustomer.relatedCustomer);
+                    const relationshipLabels = {
+                      mother: 'Mẹ',
+                      father: 'Bố',
+                      daughter: 'Con gái',
+                      son: 'Con trai',
+                      wife: 'Vợ',
+                      husband: 'Chồng',
+                      sister: 'Chị/Em gái',
+                      brother: 'Anh/Em trai',
+                      friend: 'Bạn',
+                      other: 'Khác'
+                    };
+                    return (
+                      <div>
+                        <p className="text-gray-700">
+                          <span className="font-semibold">Là {relationshipLabels[selectedCustomer.relationship] || 'người thân'} của: </span>
+                          {relatedCustomer ? (
+                            <span className="text-blue-700 font-medium">
+                              {relatedCustomer.name} ({relatedCustomer.phone})
+                            </span>
+                          ) : (
+                            <span className="text-gray-500 italic">Không tìm thấy</span>
+                          )}
+                        </p>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
 
             {/* Hiển thị kế hoạch điều trị (Sản phẩm đã chọn) */}
             {selectedCustomer.selectedProducts && selectedCustomer.selectedProducts.length > 0 && (
@@ -1018,6 +1062,55 @@ const CustomerManagement = () => {
                             placeholder="Mô tả tình trạng tóc hiện tại"
                           />
                         </div>
+                        
+                        {/* Người thân liên quan */}
+                        <div className="md:col-span-2">
+                          <Label className="font-semibold text-gray-700 mb-2 block">👥 Người thân liên quan (nếu có)</Label>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="new-related-customer">Chọn khách hàng</Label>
+                              <select
+                                id="new-related-customer"
+                                value={newCustomer.relatedCustomer || ''}
+                                onChange={(e) => handleNewCustomerChange('relatedCustomer', e.target.value || null)}
+                                className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
+                              >
+                                <option value="">-- Không có --</option>
+                                {customers
+                                  .filter(c => c.phone === newCustomer.phone && c.id !== newCustomer.id)
+                                  .map(customer => (
+                                    <option key={customer.id} value={customer.id}>
+                                      {customer.name} - {customer.phone}
+                                    </option>
+                                  ))}
+                              </select>
+                              <p className="text-xs text-gray-500 mt-1">Ví dụ: Mẹ, Con dùng chung SĐT</p>
+                            </div>
+                            <div>
+                              <Label htmlFor="new-relationship">Mối quan hệ</Label>
+                              <select
+                                id="new-relationship"
+                                value={newCustomer.relationship}
+                                onChange={(e) => handleNewCustomerChange('relationship', e.target.value)}
+                                disabled={!newCustomer.relatedCustomer}
+                                className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent disabled:bg-gray-100"
+                              >
+                                <option value="">Chọn mối quan hệ</option>
+                                <option value="mother">Mẹ</option>
+                                <option value="father">Bố</option>
+                                <option value="daughter">Con gái</option>
+                                <option value="son">Con trai</option>
+                                <option value="wife">Vợ</option>
+                                <option value="husband">Chồng</option>
+                                <option value="sister">Chị/Em gái</option>
+                                <option value="brother">Anh/Em trai</option>
+                                <option value="friend">Bạn</option>
+                                <option value="other">Khác</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+
                         <div className="md:col-span-2">
                           <Label htmlFor="new-notes">Ghi chú</Label>
                           <textarea

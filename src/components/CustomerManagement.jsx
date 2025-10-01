@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import * as XLSX from 'xlsx';
 import { customerService } from '../firebase/firestore';
+import { joicoProducts } from '../data/joicoProducts';
 import { 
   Search, 
   Plus, 
@@ -19,7 +20,8 @@ import {
   Download,
   Upload,
   Camera,
-  Image
+  Image,
+  Package
 } from 'lucide-react';
 
 const CustomerManagement = () => {
@@ -483,6 +485,52 @@ const CustomerManagement = () => {
                 {selectedCustomer.notes || 'Chưa có ghi chú'}
               </p>
             </div>
+
+            {/* Hiển thị kế hoạch điều trị (Sản phẩm đã chọn) */}
+            {selectedCustomer.selectedProducts && selectedCustomer.selectedProducts.length > 0 && (
+              <div>
+                <Label className="font-semibold flex items-center gap-2">
+                  <Package size={18} className="text-burgundy-600" />
+                  Kế hoạch điều trị - Sản phẩm Joico
+                </Label>
+                <div className="mt-2 space-y-2">
+                  {selectedCustomer.selectedProducts.map((productId) => {
+                    const allProducts = [...joicoProducts.hairCare, ...joicoProducts.colorCare];
+                    const product = allProducts.find(p => p.id === productId);
+                    if (!product) return null;
+                    
+                    return (
+                      <div key={productId} className="flex items-center justify-between bg-burgundy-50 p-3 rounded-lg border border-burgundy-200">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                            <Package className="w-5 h-5 text-burgundy-600" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900">{product.name}</p>
+                            <p className="text-sm text-gray-600">{product.category}</p>
+                          </div>
+                        </div>
+                        <Badge className="bg-burgundy-600 text-white">
+                          {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.prices.salon300ml)}
+                        </Badge>
+                      </div>
+                    );
+                  })}
+                  <div className="flex justify-between items-center bg-green-50 p-3 rounded-lg border border-green-200 font-bold">
+                    <span className="text-gray-900">Tổng giá trị:</span>
+                    <span className="text-green-700 text-lg">
+                      {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
+                        selectedCustomer.selectedProducts.reduce((total, productId) => {
+                          const allProducts = [...joicoProducts.hairCare, ...joicoProducts.colorCare];
+                          const product = allProducts.find(p => p.id === productId);
+                          return total + (product?.prices.salon300ml || 0);
+                        }, 0)
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Hiển thị ảnh trước/sau */}
             {(selectedCustomer.beforePhoto || selectedCustomer.afterPhoto) && (

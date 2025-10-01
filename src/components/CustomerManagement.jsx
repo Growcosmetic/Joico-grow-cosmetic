@@ -17,7 +17,9 @@ import {
   Calendar,
   FileText,
   Download,
-  Upload
+  Upload,
+  Camera,
+  Image
 } from 'lucide-react';
 
 const CustomerManagement = () => {
@@ -475,14 +477,43 @@ const CustomerManagement = () => {
                     </div>
                   </div>
 
-                  <div>
-                    <Label className="font-semibold">Ghi chú</Label>
-                    <p className="text-gray-700 bg-gray-50 p-3 rounded-md">
-                      {selectedCustomer.notes || 'Chưa có ghi chú'}
-                    </p>
-                  </div>
+            <div>
+              <Label className="font-semibold">Ghi chú</Label>
+              <p className="text-gray-700 bg-gray-50 p-3 rounded-md">
+                {selectedCustomer.notes || 'Chưa có ghi chú'}
+              </p>
+            </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Hiển thị ảnh trước/sau */}
+            {(selectedCustomer.beforePhoto || selectedCustomer.afterPhoto) && (
+              <div>
+                <Label className="font-semibold">Hình ảnh tóc</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                  {selectedCustomer.beforePhoto && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-2">Trước điều trị:</p>
+                      <img 
+                        src={selectedCustomer.beforePhoto} 
+                        alt="Trước điều trị" 
+                        className="w-full h-48 object-cover rounded-lg border border-gray-200"
+                      />
+                    </div>
+                  )}
+                  {selectedCustomer.afterPhoto && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-2">Sau điều trị:</p>
+                      <img 
+                        src={selectedCustomer.afterPhoto} 
+                        alt="Sau điều trị" 
+                        className="w-full h-48 object-cover rounded-lg border border-gray-200"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label className="font-semibold">Lần đến cuối</Label>
                 <p className="text-gray-700">{selectedCustomer.lastVisit}</p>
@@ -981,6 +1012,74 @@ const CustomerManagement = () => {
                     value={editingCustomer.nextAppointment || ''}
                     onChange={(e) => handleEditCustomerChange('nextAppointment', e.target.value || null)}
                   />
+                </div>
+
+                {/* Upload ảnh sau điều trị */}
+                <div className="md:col-span-2">
+                  <Label className="font-semibold mb-2 block">Hình ảnh tóc</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Ảnh trước */}
+                    <div>
+                      <Label className="text-sm text-gray-600">Trước điều trị:</Label>
+                      {editingCustomer.beforePhoto ? (
+                        <div className="mt-2 relative">
+                          <img 
+                            src={editingCustomer.beforePhoto} 
+                            alt="Trước điều trị" 
+                            className="w-full h-48 object-cover rounded-lg border border-gray-200"
+                          />
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500 italic mt-2">Chưa có ảnh</p>
+                      )}
+                    </div>
+
+                    {/* Ảnh sau */}
+                    <div>
+                      <Label className="text-sm text-gray-600">Sau điều trị:</Label>
+                      {editingCustomer.afterPhoto ? (
+                        <div className="mt-2 relative group">
+                          <img 
+                            src={editingCustomer.afterPhoto} 
+                            alt="Sau điều trị" 
+                            className="w-full h-48 object-cover rounded-lg border border-gray-200"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="absolute top-2 right-2 bg-white"
+                            onClick={() => handleEditCustomerChange('afterPhoto', null)}
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="mt-2">
+                          <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-burgundy-400 hover:bg-gray-50 transition-colors">
+                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                              <Camera size={40} className="text-gray-400 mb-2" />
+                              <p className="text-sm text-gray-500">Click để upload ảnh sau</p>
+                            </div>
+                            <input
+                              type="file"
+                              className="hidden"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onloadend = () => {
+                                    handleEditCustomerChange('afterPhoto', reader.result);
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                            />
+                          </label>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 

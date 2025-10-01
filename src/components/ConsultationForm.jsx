@@ -342,7 +342,11 @@ const ConsultationForm = () => {
         treatments: formData.customerInfo.previousTreatments || [],
         selectedProducts: selectedProducts,
         nextAppointment: formData.passport?.nextAppointment || null,
-        notes: `Tư vấn ngày ${new Date().toLocaleDateString('vi-VN')}`
+        notes: `Tư vấn ngày ${new Date().toLocaleDateString('vi-VN')}`,
+        beforePhoto: beforePhoto, // Lưu ảnh trước điều trị
+        afterPhoto: null, // Để trống, sẽ cập nhật sau
+        quizResults: quizResults, // Lưu kết quả quiz
+        professionalTests: professionalTests // Lưu kết quả test chuyên nghiệp
       };
       
       // Check for duplicate customers before saving
@@ -371,7 +375,11 @@ const ConsultationForm = () => {
           hairCondition: customerData.hairCondition || existingCustomer.hairCondition,
           treatments: [...new Set([...existingCustomer.treatments, ...customerData.treatments])],
           nextAppointment: customerData.nextAppointment || existingCustomer.nextAppointment,
-          notes: existingCustomer.notes + `\nTư vấn ngày ${new Date().toLocaleDateString('vi-VN')}`
+          notes: existingCustomer.notes + `\nTư vấn ngày ${new Date().toLocaleDateString('vi-VN')}`,
+          beforePhoto: beforePhoto || existingCustomer.beforePhoto, // Cập nhật ảnh trước nếu có
+          afterPhoto: existingCustomer.afterPhoto, // Giữ nguyên ảnh sau
+          quizResults: quizResults || existingCustomer.quizResults, // Cập nhật kết quả quiz
+          professionalTests: professionalTests || existingCustomer.professionalTests // Cập nhật test
         };
         
         // Update in localStorage

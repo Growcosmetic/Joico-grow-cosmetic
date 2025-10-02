@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thêm dữ liệu mẫu - Production</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #8B1538;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #8B1538;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #6B0F28;
+        }
+        .success {
+            background: #10B981;
+            padding: 15px;
+            border-radius: 5px;
+            color: white;
+            margin-top: 20px;
+            display: none;
+        }
+        .warning {
+            background: #F59E0B;
+            padding: 15px;
+            border-radius: 5px;
+            color: white;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Thêm dữ liệu mẫu cho Production</h1>
+        
+        <div class="warning">
+            <strong>⚠️ Lưu ý:</strong> Chỉ sử dụng trên production (joico-defy-damage.web.app)
+        </div>
+        
+        <p>Click nút dưới để thêm 3 khách hàng mẫu vào localStorage của production.</p>
+        
+        <button onclick="addSampleCustomers()">➕ Thêm 3 khách hàng mẫu</button>
+        <button onclick="viewCustomers()">👁️ Xem danh sách khách</button>
+        <button onclick="clearCustomers()">🗑️ Xóa tất cả</button>
+        <button onclick="goToApp()">🚀 Vào ứng dụng</button>
+        
+        <div class="success" id="success">✅ Đã thêm thành công!</div>
+        
+        <div id="customerList" style="display:none; margin-top: 20px; padding: 15px; background: #f9f9f9; border-radius: 5px;">
+            <h3>Danh sách khách hàng hiện có:</h3>
+            <div id="customerContent"></div>
+        </div>
+    </div>
+
+    <script>
+        const sampleCustomers = [
+            {
+                id: '1' + Date.now(),
+                name: 'Huỳnh Chí Tâm',
+                phone: '0908182440',
+                email: 'chitam@gmail.com',
+                birthday: '1990-05-15',
+                gender: 'male',
+                lastVisit: '2025-09-27',
+                totalVisits: 1,
+                status: 'active',
+                hairCondition: 'Mất độ bóng, Rụng tóc, Chẻ ngọn, Khô xơ',
+                treatments: ['Nối tóc', 'Duỗi'],
+                notes: 'Tư vấn ngày 27/9/2025'
+            },
+            {
+                id: '2' + Date.now(),
+                name: 'Nguyễn Văn A',
+                phone: '0908123456',
+                email: 'vana@gmail.com',
+                birthday: '1985-08-20',
+                gender: 'male',
+                lastVisit: '2025-09-25',
+                totalVisits: 3,
+                status: 'active',
+                hairCondition: 'Tóc khô, hư tổn',
+                treatments: ['Uốn', 'Nhuộm'],
+                notes: 'Khách hàng VIP'
+            },
+            {
+                id: '3' + Date.now(),
+                name: 'Trần Thị B',
+                phone: '0908654321',
+                email: 'thib@gmail.com',
+                birthday: '1992-03-10',
+                gender: 'female',
+                lastVisit: '2025-09-20',
+                totalVisits: 2,
+                status: 'active',
+                hairCondition: 'Tóc mỏng, rụng nhiều',
+                treatments: ['Tẩy', 'Duỗi'],
+                notes: 'Cần chăm sóc đặc biệt'
+            }
+        ];
+
+        function addSampleCustomers() {
+            // Lấy danh sách khách hàng hiện có
+            const existingCustomers = JSON.parse(localStorage.getItem('customers') || '[]');
+            
+            // Thêm khách hàng mẫu
+            const updatedCustomers = [...existingCustomers, ...sampleCustomers];
+            
+            // Lưu vào localStorage
+            localStorage.setItem('customers', JSON.stringify(updatedCustomers));
+            
+            // Hiển thị thông báo
+            document.getElementById('success').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('success').style.display = 'none';
+            }, 3000);
+            
+            console.log('✅ Đã thêm 3 khách hàng mẫu!');
+            console.log('📊 Tổng số khách hàng:', updatedCustomers.length);
+        }
+
+        function viewCustomers() {
+            const customers = JSON.parse(localStorage.getItem('customers') || '[]');
+            const listDiv = document.getElementById('customerList');
+            const contentDiv = document.getElementById('customerContent');
+            
+            if (customers.length === 0) {
+                contentDiv.innerHTML = '<p>Chưa có khách hàng nào. Hãy thêm khách hàng mẫu!</p>';
+            } else {
+                contentDiv.innerHTML = customers.map((c, i) => `
+                    <div style="padding: 10px; border-bottom: 1px solid #ddd;">
+                        <strong>${i + 1}. ${c.name}</strong><br>
+                        📞 ${c.phone} | ✉️ ${c.email}<br>
+                        <small>Lần cuối: ${c.lastVisit || 'N/A'}</small>
+                    </div>
+                `).join('');
+            }
+            
+            listDiv.style.display = 'block';
+        }
+
+        function clearCustomers() {
+            if (confirm('Bạn có chắc muốn xóa TẤT CẢ khách hàng?')) {
+                localStorage.removeItem('customers');
+                alert('✅ Đã xóa tất cả khách hàng!');
+                document.getElementById('customerList').style.display = 'none';
+            }
+        }
+
+        function goToApp() {
+            window.open('https://joico-defy-damage.web.app', '_blank');
+        }
+    </script>
+</body>
+</html>

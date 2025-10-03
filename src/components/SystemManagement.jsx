@@ -14,11 +14,17 @@ import {
   Trash2,
   Download,
   RefreshCw,
-  AlertTriangle
+  AlertTriangle,
+  Package,
+  Scissors
 } from 'lucide-react';
 import { auth } from '../firebase/config';
+import ProductManagement from './ProductManagement';
+import ServiceManagement from './ServiceManagement';
+import StaffManagement from './StaffManagement';
 
 const SystemManagement = () => {
+  const [activeTab, setActiveTab] = useState('overview');
   const [loginHistory, setLoginHistory] = useState([]);
   const [systemStats, setSystemStats] = useState({
     totalUsers: 0,
@@ -97,12 +103,33 @@ const SystemManagement = () => {
     }
   };
 
-  return (
+  const tabs = [
+    { id: 'overview', name: 'Tổng quan', icon: <Activity className="w-4 h-4" /> },
+    { id: 'products', name: 'Quản lý sản phẩm', icon: <Package className="w-4 h-4" /> },
+    { id: 'services', name: 'Quản lý dịch vụ', icon: <Scissors className="w-4 h-4" /> },
+    { id: 'staff', name: 'Quản lý nhân viên', icon: <Users className="w-4 h-4" /> }
+  ];
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'products':
+        return <ProductManagement />;
+      case 'services':
+        return <ServiceManagement />;
+      case 'staff':
+        return <StaffManagement />;
+      case 'overview':
+      default:
+        return renderOverview();
+    }
+  };
+
+  const renderOverview = () => (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-burgundy-700">Quản lý hệ thống</h2>
+          <h2 className="text-2xl font-bold text-burgundy-700">Tổng quan hệ thống</h2>
           <p className="text-gray-600">Theo dõi và quản lý hoạt động hệ thống</p>
         </div>
         <div className="flex gap-2">
@@ -325,6 +352,55 @@ const SystemManagement = () => {
               <RefreshCw size={16} className="mr-2" />
               Reset toàn bộ hệ thống
             </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-burgundy-700">Quản lý hệ thống</h2>
+          <p className="text-gray-600">Theo dõi và quản lý hoạt động hệ thống</p>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="w-5 h-5" />
+            Quản lý hệ thống
+          </CardTitle>
+          <CardDescription>
+            Quản lý các cài đặt và dữ liệu cốt lõi của hệ thống
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === tab.id
+                      ? 'border-burgundy-500 text-burgundy-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  {tab.icon}
+                  {tab.name}
+                </button>
+              ))}
+            </nav>
+          </div>
+          
+          <div className="mt-6">
+            {renderTabContent()}
           </div>
         </CardContent>
       </Card>

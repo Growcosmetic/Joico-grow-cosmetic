@@ -22,6 +22,7 @@ const ConsultationForm = () => {
   const [beforePhoto, setBeforePhoto] = useState(null);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [customers, setCustomers] = useState([]); // Danh sách khách hàng
+  const [staff, setStaff] = useState([]); // Danh sách nhân viên
 
   // Load data from localStorage on component mount
   useEffect(() => {
@@ -43,6 +44,12 @@ const ConsultationForm = () => {
     const savedCustomers = localStorage.getItem('customers');
     if (savedCustomers) {
       setCustomers(JSON.parse(savedCustomers));
+    }
+
+    // Load staff từ localStorage
+    const savedStaff = localStorage.getItem('salonStaff');
+    if (savedStaff) {
+      setStaff(JSON.parse(savedStaff));
     }
   }, []);
   const [matchedCustomers, setMatchedCustomers] = useState([]); // Danh sách khách trùng lặp
@@ -70,7 +77,8 @@ const ConsultationForm = () => {
         oneMonth: ''
       },
       relatedCustomer: null, // ID khách hàng liên quan
-      relationship: '' // Mối quan hệ
+      relationship: '', // Mối quan hệ
+      consultantId: '' // ID nhân viên tư vấn
     },
     // Step 2: Hair Diagnosis
     diagnosis: {
@@ -542,7 +550,8 @@ const ConsultationForm = () => {
             today: '',
             twoWeeks: '',
             oneMonth: ''
-          }
+          },
+          consultantId: ''
         },
         diagnosis: {
           elasticity: '',
@@ -696,6 +705,24 @@ const ConsultationForm = () => {
             <option value="male">Nam</option>
             <option value="female">Nữ</option>
             <option value="other">Khác</option>
+          </select>
+        </div>
+        <div>
+          <Label htmlFor="consultant">Nhân viên tư vấn</Label>
+          <select
+            id="consultant"
+            value={formData.customerInfo.consultantId}
+            onChange={(e) => handleInputChange('customerInfo', 'consultantId', e.target.value)}
+            className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
+          >
+            <option value="">Chọn nhân viên tư vấn</option>
+            {staff
+              .filter(s => s.isConsultant && s.isActive)
+              .map(consultant => (
+                <option key={consultant.id} value={consultant.id}>
+                  {consultant.name} - {consultant.position}
+                </option>
+              ))}
           </select>
         </div>
       </div>

@@ -21,7 +21,8 @@ import {
   Plus,
   Minus,
   Eye,
-  Share2
+  Share2,
+  RefreshCw
 } from 'lucide-react';
 
 const ProductRecommendation = () => {
@@ -33,7 +34,32 @@ const ProductRecommendation = () => {
   const [selectedHairType, setSelectedHairType] = useState('all');
   const [showCart, setShowCart] = useState(false);
 
-  // Database sản phẩm JOICO
+  // Load products from localStorage (managed products)
+  useEffect(() => {
+    const loadManagedProducts = () => {
+      const savedProducts = localStorage.getItem('managedProducts');
+      if (savedProducts) {
+        setProducts(JSON.parse(savedProducts));
+      } else {
+        // Fallback to default products if no managed products
+        setProducts(joicoProducts);
+      }
+    };
+    
+    loadManagedProducts();
+  }, []);
+
+  // Refresh products from localStorage
+  const refreshProducts = () => {
+    const savedProducts = localStorage.getItem('managedProducts');
+    if (savedProducts) {
+      setProducts(JSON.parse(savedProducts));
+    } else {
+      setProducts(joicoProducts);
+    }
+  };
+
+  // Database sản phẩm JOICO (fallback)
   const joicoProducts = [
     {
       id: 'kpak-shampoo',
@@ -348,13 +374,25 @@ const ProductRecommendation = () => {
           </h1>
           <p className="text-gray-600 mt-2">
             Sản phẩm chăm sóc tóc chuyên nghiệp được cá nhân hóa
+            <span className="text-burgundy-600 font-medium ml-2">
+              ({products.length} sản phẩm)
+            </span>
           </p>
         </div>
-        <Button 
-          onClick={() => setShowCart(!showCart)}
-          className="bg-burgundy-500 hover:bg-burgundy-600 relative"
-        >
-          <ShoppingCart className="w-4 h-4 mr-2" />
+        <div className="flex gap-2">
+          <Button 
+            onClick={refreshProducts}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Làm mới
+          </Button>
+          <Button 
+            onClick={() => setShowCart(!showCart)}
+            className="bg-burgundy-500 hover:bg-burgundy-600 relative"
+          >
+            <ShoppingCart className="w-4 h-4 mr-2" />
           Giỏ hàng ({cart.length})
           {cart.length > 0 && (
             <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,13 +10,51 @@ import {
   Palette, 
   ShoppingCart,
   Info,
-  X
+  X,
+  RefreshCw
 } from 'lucide-react';
 
 const TreatmentPlan = ({ onSave, initialSelectedProducts = [] }) => {
   const [selectedProducts, setSelectedProducts] = useState(initialSelectedProducts);
   const [activeCategory, setActiveCategory] = useState('hairCare');
   const [showProductDetails, setShowProductDetails] = useState(null);
+  const [managedProducts, setManagedProducts] = useState([]);
+
+  // Load products from localStorage (managed products)
+  useEffect(() => {
+    const loadManagedProducts = () => {
+      const savedProducts = localStorage.getItem('managedProducts');
+      if (savedProducts) {
+        setManagedProducts(JSON.parse(savedProducts));
+      } else {
+        // Fallback to default products if no managed products
+        const allProducts = [...joicoProducts.hairCare, ...joicoProducts.colorCare];
+        setManagedProducts(allProducts);
+      }
+    };
+    
+    loadManagedProducts();
+  }, []);
+
+  // Get products by category from managed products
+  const getManagedProductsByCategory = (category) => {
+    return managedProducts.filter(product => {
+      if (category === 'hairCare') {
+        return product.category === 'Hair Care' || product.line?.toLowerCase().includes('hair');
+      } else if (category === 'colorCare') {
+        return product.category === 'Color Care' || product.line?.toLowerCase().includes('color');
+      }
+      return true;
+    });
+  };
+
+  // Refresh products from localStorage
+  const refreshProducts = () => {
+    const savedProducts = localStorage.getItem('managedProducts');
+    if (savedProducts) {
+      setManagedProducts(JSON.parse(savedProducts));
+    }
+  };
 
   // Toggle product selection
   const toggleProduct = (productId) => {
@@ -31,15 +69,14 @@ const TreatmentPlan = ({ onSave, initialSelectedProducts = [] }) => {
 
   // Get selected products data
   const getSelectedProductsData = () => {
-    const allProducts = [...joicoProducts.hairCare, ...joicoProducts.colorCare];
-    return selectedProducts.map(id => allProducts.find(product => product.id === id));
+    return selectedProducts.map(id => managedProducts.find(product => product.id === id));
   };
 
   // Calculate total price
   const calculateTotalPrice = () => {
     const selectedData = getSelectedProductsData();
     return selectedData.reduce((total, product) => {
-      return total + (product.prices.salon300ml || 0);
+      return total + (product.price || 0);
     }, 0);
   };
 
@@ -71,17 +108,25 @@ const TreatmentPlan = ({ onSave, initialSelectedProducts = [] }) => {
                 onChange={() => toggleProduct(product.id)}
                 className="absolute -top-2 -left-2 z-10"
               />
-              <div className={`w-16 h-16 rounded-lg bg-${product.color}-100 flex items-center justify-center`}>
-                <Package className="w-8 h-8 text-gray-600" />
+              <div className="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center">
+                {product.image ? (
+                  <img 
+                    src={product.image} 
+                    alt={product.name}
+                    className="w-12 h-12 object-cover rounded"
+                  />
+                ) : (
+                  <Package className="w-8 h-8 text-gray-600" />
+                )}
               </div>
             </div>
             
             <div className="flex-1">
               <h4 className="font-semibold text-gray-900">{product.name}</h4>
-              <p className="text-sm text-gray-600">{product.category}</p>
+              <p className="text-sm text-gray-600">{product.category || product.line}</p>
               <div className="flex items-center space-x-2 mt-1">
                 <Badge variant="outline" className="text-xs">
-                  {formatPrice(product.prices.salon300ml)}
+                  {formatPrice(product.price)}
                 </Badge>
                 <Button
                   variant="ghost"
@@ -127,33 +172,44 @@ const TreatmentPlan = ({ onSave, initialSelectedProducts = [] }) => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div>
-                <h4 className="font-semibold mb-2">Lợi ích sản phẩm:</h4>
-                <ul className="space-y-1">
-                  {showProductDetails.benefits.map((benefit, index) => (
-                    <li key={index} className="flex items-start space-x-2">
-                      <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                      <span className="text-sm">{benefit}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              {showProductDetails.benefits && showProductDetails.benefits.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-2">Lợi ích sản phẩm:</h4>
+                  <ul className="space-y-1">
+                    {showProductDetails.benefits.map((benefit, index) => (
+                      <li key={index} className="flex items-start space-x-2">
+                        <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm">{benefit}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {showProductDetails.description && (
+                <div>
+                  <h4 className="font-semibold mb-2">Mô tả sản phẩm:</h4>
+                  <p className="text-sm text-gray-600">{showProductDetails.description}</p>
+                </div>
+              )}
               
               <div>
-                <h4 className="font-semibold mb-2">Giá sản phẩm:</h4>
-                <div className="grid grid-cols-2 gap-4">
+                <h4 className="font-semibold mb-2">Thông tin sản phẩm:</h4>
+                <div className="grid grid-cols-1 gap-4">
                   <div className="bg-gray-50 p-3 rounded-lg">
-                    <p className="text-sm font-medium">Giá salon 300ml</p>
+                    <p className="text-sm font-medium">Giá bán</p>
                     <p className="text-lg font-bold text-burgundy-600">
-                      {formatPrice(showProductDetails.prices.salon300ml)}
+                      {formatPrice(showProductDetails.price)}
                     </p>
                   </div>
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <p className="text-sm font-medium">Giá salon 1000ml</p>
-                    <p className="text-lg font-bold text-burgundy-600">
-                      {formatPrice(showProductDetails.prices.salon1000ml)}
-                    </p>
-                  </div>
+                  {showProductDetails.volume && (
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-sm font-medium">Dung tích</p>
+                      <p className="text-lg font-bold text-gray-700">
+                        {showProductDetails.volume}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -167,8 +223,24 @@ const TreatmentPlan = ({ onSave, initialSelectedProducts = [] }) => {
     <div className="space-y-6">
       {/* Header */}
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Kế hoạch điều trị</h2>
-        <p className="text-gray-600">Chọn sản phẩm phù hợp cho khách hàng</p>
+        <div className="flex items-center justify-center gap-4 mb-2">
+          <h2 className="text-2xl font-bold text-gray-900">Kế hoạch điều trị</h2>
+          <Button
+            onClick={refreshProducts}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Làm mới
+          </Button>
+        </div>
+        <p className="text-gray-600">
+          Chọn sản phẩm phù hợp cho khách hàng 
+          <span className="text-burgundy-600 font-medium ml-2">
+            ({getManagedProductsByCategory(activeCategory).length} sản phẩm)
+          </span>
+        </p>
       </div>
 
       {/* Category Tabs */}
@@ -193,7 +265,7 @@ const TreatmentPlan = ({ onSave, initialSelectedProducts = [] }) => {
 
       {/* Products Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {getProductsByCategory(activeCategory).map(renderProductCard)}
+        {getManagedProductsByCategory(activeCategory).map(renderProductCard)}
       </div>
 
       {/* Selected Products Summary */}
@@ -211,7 +283,7 @@ const TreatmentPlan = ({ onSave, initialSelectedProducts = [] }) => {
                 <div key={product.id} className="flex justify-between items-center bg-white p-2 rounded">
                   <span className="font-medium">{product.name}</span>
                   <span className="text-burgundy-600 font-bold">
-                    {formatPrice(product.prices.salon300ml)}
+                    {formatPrice(product.price)}
                   </span>
                 </div>
               ))}

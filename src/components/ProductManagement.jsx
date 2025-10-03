@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Package, Plus, Search, Edit, Trash2, Download, Upload, FileSpreadsheet } from 'lucide-react';
+import initializeJOICOProducts from '../utils/initializeProducts';
 import * as XLSX from 'xlsx';
 
 const ProductManagement = () => {
@@ -28,7 +29,10 @@ const ProductManagement = () => {
     if (savedProducts) {
       setProducts(JSON.parse(savedProducts));
     } else {
-      setProducts([]);
+      // Khởi tạo danh sách sản phẩm JOICO mặc định
+      const defaultProducts = initializeJOICOProducts();
+      setProducts(defaultProducts);
+      saveProducts(defaultProducts);
     }
   };
 

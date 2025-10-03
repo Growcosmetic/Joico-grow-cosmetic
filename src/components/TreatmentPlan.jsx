@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { joicoProducts, getProductsByCategory } from '../data/joicoProducts';
+import initializeJOICOProducts from '../utils/initializeProducts';
 import { 
   Check, 
   Package, 
@@ -27,9 +28,9 @@ const TreatmentPlan = ({ onSave, initialSelectedProducts = [] }) => {
       if (savedProducts) {
         setManagedProducts(JSON.parse(savedProducts));
       } else {
-        // Fallback to default products if no managed products
-        const allProducts = [...joicoProducts.hairCare, ...joicoProducts.colorCare];
-        setManagedProducts(allProducts);
+        // Khởi tạo danh sách sản phẩm JOICO mặc định
+        const defaultProducts = initializeJOICOProducts();
+        setManagedProducts(defaultProducts);
       }
     };
     

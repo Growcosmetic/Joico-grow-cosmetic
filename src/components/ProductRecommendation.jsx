@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import initializeJOICOProducts from '../utils/initializeProducts';
 import { 
   ShoppingCart, 
   Star, 
@@ -41,8 +42,9 @@ const ProductRecommendation = () => {
       if (savedProducts) {
         setProducts(JSON.parse(savedProducts));
       } else {
-        // Fallback to default products if no managed products
-        setProducts(joicoProducts);
+        // Khởi tạo danh sách sản phẩm JOICO mặc định
+        const defaultProducts = initializeJOICOProducts();
+        setProducts(defaultProducts);
       }
     };
     
@@ -678,6 +680,7 @@ const ProductRecommendation = () => {
           </p>
         </div>
       )}
+      </div>
     </div>
   );
 };

@@ -5,13 +5,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Users, Plus, Search, Edit, Trash2, Phone, Mail, Calendar, Star, Award } from 'lucide-react';
+import { Users, Plus, Search, Edit, Trash2, Phone, Mail, Calendar, Star, Award, Download, Upload, FileSpreadsheet } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 const StaffManagement = () => {
   const [staff, setStaff] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -180,6 +182,109 @@ const StaffManagement = () => {
     });
   };
 
+  // Excel functions
+  const exportToExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(staff.map(staffMember => ({
+      'Họ và tên': staffMember.name,
+      'Số điện thoại': staffMember.phone,
+      'Email': staffMember.email || '',
+      'Chức vụ': staffMember.position || '',
+      'Chuyên môn': staffMember.specializations?.join(', ') || '',
+      'Kinh nghiệm': staffMember.experience || '',
+      'Đánh giá': staffMember.rating || 5,
+      'Giới thiệu': staffMember.bio || '',
+      'Giờ làm việc': staffMember.workingHours || '',
+      'Hoa hồng (%)': staffMember.commission || 0,
+      'Đang làm việc': staffMember.isActive ? 'Có' : 'Không',
+      'Nhân viên tư vấn': staffMember.isConsultant ? 'Có' : 'Không',
+      'Stylist': staffMember.isStylist ? 'Có' : 'Không'
+    })));
+    
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Nhân viên');
+    
+    const fileName = `danh_sach_nhan_vien_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+  };
+
+  const createExcelTemplate = () => {
+    const templateData = [{
+      'Họ và tên': 'Nguyễn Thị Lan Anh',
+      'Số điện thoại': '0901234567',
+      'Email': 'lananh@salon.com',
+      'Chức vụ': 'Stylist Senior',
+      'Chuyên môn': 'Cắt tóc nữ, Nhuộm tóc, Uốn tóc',
+      'Kinh nghiệm': '8 năm',
+      'Đánh giá': '4.8',
+      'Giới thiệu': 'Chuyên gia về tóc nữ với 8 năm kinh nghiệm',
+      'Giờ làm việc': '9:00 - 18:00',
+      'Hoa hồng (%)': '15',
+      'Đang làm việc': 'Có',
+      'Nhân viên tư vấn': 'Có',
+      'Stylist': 'Có'
+    }];
+    
+    const worksheet = XLSX.utils.json_to_sheet(templateData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Template');
+    
+    XLSX.writeFile(workbook, 'template_nhan_vien.xlsx');
+  };
+
+  const importFromExcel = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    setLoading(true);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        const importedStaff = jsonData.map((row, index) => ({
+          id: `imported_${Date.now()}_${index}`,
+          name: row['Họ và tên'] || '',
+          phone: row['Số điện thoại'] || '',
+          email: row['Email'] || '',
+          position: row['Chức vụ'] || '',
+          specializations: row['Chuyên môn']?.split(', ').filter(Boolean) || [],
+          experience: row['Kinh nghiệm'] || '',
+          rating: parseFloat(row['Đánh giá']) || 5,
+          bio: row['Giới thiệu'] || '',
+          workingHours: row['Giờ làm việc'] || '',
+          commission: parseFloat(row['Hoa hồng (%)']) || 0,
+          isActive: row['Đang làm việc'] === 'Có',
+          isConsultant: row['Nhân viên tư vấn'] === 'Có',
+          isStylist: row['Stylist'] === 'Có',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }));
+
+        // Merge with existing staff
+        const existingStaff = staff.filter(s => 
+          !importedStaff.some(is => is.phone === s.phone)
+        );
+        const updatedStaff = [...existingStaff, ...importedStaff];
+        
+        setStaff(updatedStaff);
+        saveStaff(updatedStaff);
+        
+        alert(`Đã import thành công ${importedStaff.length} nhân viên!`);
+      } catch (error) {
+        console.error('Error importing Excel:', error);
+        alert('Có lỗi khi import file Excel. Vui lòng kiểm tra định dạng file!');
+      } finally {
+        setLoading(false);
+        event.target.value = ''; // Reset file input
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
   const filteredStaff = staff.filter(staffMember => 
     staffMember.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     staffMember.position?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -232,6 +337,84 @@ const StaffManagement = () => {
           Thêm nhân viên
         </Button>
       </div>
+
+      {/* Excel Management */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileSpreadsheet className="w-5 h-5" />
+            Quản lý Excel
+          </CardTitle>
+          <CardDescription>
+            Import/Export danh sách nhân viên bằng file Excel
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Button
+              onClick={createExcelTemplate}
+              variant="outline"
+              className="border-blue-500 text-blue-500 hover:bg-blue-50"
+            >
+              <FileSpreadsheet size={16} className="mr-2" />
+              Template Excel
+            </Button>
+            
+            <Button
+              onClick={exportToExcel}
+              variant="outline"
+              className="border-green-500 text-green-500 hover:bg-green-50"
+            >
+              <Download size={16} className="mr-2" />
+              Xuất Excel
+            </Button>
+            
+            <div className="relative">
+              <input
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={importFromExcel}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                disabled={loading}
+              />
+              <Button
+                variant="outline"
+                className="border-purple-500 text-purple-500 hover:bg-purple-50 w-full"
+                disabled={loading}
+              >
+                <Upload size={16} className="mr-2" />
+                {loading ? 'Đang import...' : 'Nhập Excel'}
+              </Button>
+            </div>
+            
+            <Button
+              onClick={loadStaff}
+              variant="outline"
+              className="border-gray-500 text-gray-500 hover:bg-gray-50"
+            >
+              <Users size={16} className="mr-2" />
+              Làm mới
+            </Button>
+          </div>
+          
+          <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+            <div className="flex items-start gap-2">
+              <FileSpreadsheet className="w-5 h-5 text-blue-500 mt-0.5" />
+              <div className="text-sm text-blue-700">
+                <p className="font-medium">Hướng dẫn sử dụng Excel:</p>
+                <ul className="mt-1 space-y-1 text-xs">
+                  <li>• Tải Template Excel để xem định dạng chuẩn</li>
+                  <li>• Điền dữ liệu nhân viên vào file Excel theo template</li>
+                  <li>• Sử dụng "Nhập Excel" để import nhiều nhân viên cùng lúc</li>
+                  <li>• Sử dụng "Xuất Excel" để backup dữ liệu hiện có</li>
+                  <li>• Các cột bắt buộc: Họ và tên, Số điện thoại</li>
+                  <li>• Các cột tùy chọn: Email, Chức vụ, Chuyên môn, Kinh nghiệm, v.v.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Search */}
       <Card>
